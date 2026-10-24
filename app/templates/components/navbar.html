@@ -1,7 +1,14 @@
-<nav class="d-flex bg-dark text-white p-2 gap-3 align-items-center position-fixed" style="width: 100%; z-index: 999; ">
-    <h4 class="px-4 mb-0">CV. Twin Anugrah Jaya</h4>
-    <button class="btn border border-light-subtle text-light px-2 py-1" id="sidebar-button">☰</button>
-    <div class="flex-grow-1 d-flex justify-content-end align-items-center position-relative">
-        <a class="text-light text-decoration-none px-4 fw-medium" href="{{ url_for('logout') }}">Logout</a>
+<nav class="app-navbar navbar navbar-dark bg-dark px-3">
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-light btn-sm" id="sidebar-button" type="button"
+                aria-controls="sidebar" aria-label="Toggle menu">☰</button>
+        <a class="navbar-brand mb-0 h1 fs-5" href="{{ url_for('dashboard.index') }}">{{ app_name }}</a>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-white-50 small d-none d-sm-inline">{{ current_user }}</span>
+        <form action="{{ url_for('auth.logout') }}" method="POST" data-no-nav>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-link text-light text-decoration-none p-0 fw-medium">Logout</button>
+        </form>
     </div>
 </nav>

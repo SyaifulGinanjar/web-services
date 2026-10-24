@@ -1,34 +1,20 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Ubah Karyawan - Data Service {% endblock %}
-{% block title_content %} Ubah Karyawan {% endblock %}
+{% block title %}Ubah Karyawan{% endblock %}
+{% block title_content %}Ubah Karyawan{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Karyawan', url_for('karyawan.index')), ('Ubah Karyawan', none)]) }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for('data_karyawan')}}">Data Karayawan</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Ubah Karayawan</li>
-    </ol>
-</nav>
-<form action="{{ url_for('ubah_karyawan', id=data.id) }}" method="POST" class="row">
-    <div class="col-6">
-        <div class="mb-3">
-            <label class="form-label">Nama <i style="color: red;">*</i></label>
-            <input class="form-control" required name=nama value="{{ data.nama }}" />
+<div class="card form-card">
+    <form class="card-body" action="{{ url_for('karyawan.edit', id=data.id) }}" method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {{ ui.input('nama', 'Nama', form, errors) }}
+        {{ ui.input('no_tlpn', 'No. Telepon', form, errors, type='tel') }}
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('karyawan.index') }}" class="btn btn-outline-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
         </div>
-        <div class="mb-3">
-            <label class="form-label">No. Telepon <i style="color: red;">*</i></label>
-            <input class="form-control" required name="no_tlpn" value="{{ data.no_tlpn }}" />
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Upload Image</label>
-            <input class="form-control" type="file" id="formFile">
-        </div>
-        <div class="d-flex gap-1 justify-content-end">
-            <a href="{{ url_for('data_karyawan') }}" class="btn btn-danger btn-block">Cancel</a>
-            <button type="submit" class="btn btn-primary btn-block">Submit</button>
-        </div>
-    </div>
-</form>
+    </form>
+</div>
 {% endblock %}

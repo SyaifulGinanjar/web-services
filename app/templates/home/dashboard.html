@@ -1,167 +1,89 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Dashboard - Data Service {% endblock %}
-{% block title_content %} Dashboard {% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block page %}dashboard{% endblock %}
+{% block title_content %}Dashboard KPI{% endblock %}
+
+{% block actions %}
+<form class="d-flex flex-wrap gap-2" method="GET" aria-label="Filter periode">
+    <select class="form-select form-select-sm w-auto" name="tahun" aria-label="Tahun" data-auto-submit>
+        <option value="">Semua tahun</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if y == tahun %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+    </select>
+    <select class="form-select form-select-sm w-auto" name="bulan" aria-label="Bulan" data-auto-submit>
+        <option value="">Semua bulan</option>
+        {% for nama in bulan_list %}
+        <option value="{{ loop.index }}" {% if loop.index == bulan %}selected{% endif %}>{{ nama }}</option>
+        {% endfor %}
+    </select>
+    <noscript><button class="btn btn-primary btn-sm">Filter</button></noscript>
+</form>
+{% endblock %}
 
 {% block content %}
-<div class="column">
-    <div class="card mb-4">
-        <div class="card-body text-center h3">
-            Key Performance Indicators (KPI) CV. TWIN ANUGRAH JAYA
-        </div>
-    </div>
-    <div class="row mb-3 d-flex justify-content-between">
-        <div class="col-xl-3 col-md-6">
-            <form class="card mb-4">
-                <div class="card-header h4">Dropdown</div>
-                <div class="card-body text-center">
-                    <select class="form-select" aria-label="Default select example">
-                        <option selected>Semua Bulan</option>
-                        <option value="1">Januari</option>
-                        <option value="2">Febuari</option>
-                        <option value="3">Maret</option>
-                        <option value="4">April</option>
-                        <option value="5">Mei</option>
-                        <option value="6">Juni</option>
-                        <option value="7">Juli</option>
-                    </select>
-                </div>
-                <div class="card-footer d-grid">
-                    <button class="btn btn-primary">Filter</button>
-                </div>
-            </form>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card mb-4">
-                <div class="card-header h4">Total Perkerjaan</div>
-                <div class="card-body text-center h1">{{total_pekerjaan}}</div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small stretched-link" href="{{ url_for('data_services') }}" target="_blank">Lihat
-                        Selengkap</a>
-                    <div class="small">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-chevron-right preview-icon">
-                            <path d="m9 18 6-6-6-6" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col">
-            <div class="border rounded overflow-hidden">
-                <div class="py-2 px-3 mb-3 h5" style="background-color: hsl(0, 0%, 95%);">
-                    1 Hari Kunjungan
-                </div>
-                <div class="px-3 pb-2" style="height: 320px;">
-                    <canvas id="chartSatuHariKunjungan" class="mx-auto"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="border rounded overflow-hidden">
-                <div class="py-2 px-3 mb-3 h5" style="background-color: hsl(0, 0%, 95%);">
-                    3 Hari Selesai
-                </div>
-                <div class="px-3 pb-2" style="height: 320px;">
-                    <canvas id="chartTigaHariSelesai" class="mx-auto"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="border rounded overflow-hidden">
-                <div class="py-2 px-3 mb-3 h5" style="background-color: hsl(0, 0%, 95%);">
-                    Status Garansi
-                </div>
-                <div class="px-3 pb-2" style="height: 320px;">
-                    <canvas id="chartStatusGaransi" class="mx-auto"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            <div class="border rounded overflow-hidden">
-                <div class="py-2 px-3 mb-3 h5" style="background-color: hsl(0, 0%, 95%);">
-                    Kinerja Karyawan
-                </div>
-                <div class="px-3 pb-2" style="height: 320px;">
-                    <canvas id="fooChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="border rounded overflow-hidden">
-                <div class="py-2 px-3 mb-3 h5" style="background-color: hsl(0, 0%, 95%);">
-                    Seri Unit
-                </div>
-                <div class="px-3 pb-2" style="height: 320px;">
+{% set t = summary.totals %}
+<p class="text-body-secondary mb-3">
+    Periode: <strong>{{ bulan_list[bulan - 1] if bulan else 'Semua bulan' }} {{ tahun or 'semua tahun' }}</strong>
+    · berdasarkan tanggal SPK
+</p>
 
-                </div>
+<div class="row g-3 mb-3">
+    {% for label, value, color, url in [
+        ('Total Customer', t.total_customer, 'primary', url_for('customer.index')),
+        ('Total Pekerjaan', t.total_pekerjaan, 'info', url_for('service.index')),
+        ('Selesai', t.selesai, 'success', url_for('service.index', status='completed')),
+        ('Dalam Proses', t.proses, 'warning', url_for('service.index', status='in progress')),
+        ('Belum Dijadwalkan', t.belum_dijadwalkan, 'secondary', url_for('service.index', status='belum')),
+    ] %}
+    <div class="col-6 col-md-4 col-xl">
+        <a class="card stat-card border-start border-4 border-{{ color }} h-100 text-decoration-none" href="{{ url }}">
+            <div class="card-body">
+                <div class="text-body-secondary small">{{ label }}</div>
+                <div class="fs-2 fw-semibold text-body">{{ value }}</div>
             </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Kunjungan ≤ {{ summary.batas.kunjungan }} hari</div>
+            <div class="card-body chart-box"><canvas id="chartKunjungan" aria-label="Grafik KPI kunjungan"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Selesai ≤ {{ summary.batas.selesai }} hari</div>
+            <div class="card-body chart-box"><canvas id="chartSelesai" aria-label="Grafik KPI penyelesaian"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-12 col-xl-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Status Garansi</div>
+            <div class="card-body chart-box"><canvas id="chartGaransi" aria-label="Grafik status garansi"></canvas></div>
         </div>
     </div>
 </div>
-<script>
-    
 
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Kinerja Karyawan</div>
+            <div class="card-body chart-box"><canvas id="chartTeknisi" aria-label="Grafik kinerja karyawan"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Seri Unit Terbanyak (Model Indoor)</div>
+            <div class="card-body chart-box"><canvas id="chartUnit" aria-label="Grafik seri unit"></canvas></div>
+        </div>
+    </div>
+</div>
 
-    const chartSatuHariKunjungan = new Chart("chartSatuHariKunjungan", {
-        type: 'pie',
-        data: {
-            labels: ["Sukses", "Tidak Sukses"],
-            datasets: [{
-                data: [12, 19]
-            }]
-        },
-    });
-
-    const chartTigaHariSelesai = new Chart("chartTigaHariSelesai", {
-        type: 'pie',
-        data: {
-            labels: ['Sukses', 'Tidak Sukses'],
-            datasets: [{
-                data: [12, 19]
-            }]
-        }
-    });
-
-    const charStatusGaransi = new Chart("chartStatusGaransi", {
-        type: 'pie',
-        data: {
-            labels: ["Out Of Warranty", "Under Warranty"],
-            datasets: [{
-                data: [1, 3],
-                backgroundColor: [
-                    'rgba(252, 186, 3, 0.7)',
-                    'rgba(3, 94, 252, 0.7)'
-                ]
-            }]
-        }
-    });
-
-
-    // START
-    const xValues = ["Italy", "France", "Spain", "USA", "Argentina"];
-    const yValues = [55, 49, 44, 24, 15];
-    const barColors = ["red", "green", "blue", "orange", "brown"];
-
-    const fooChart = new Chart("fooChart", {
-        type: "bar",
-        data: {
-            labels: xValues,
-            datasets: [{
-                backgroundColor: barColors,
-                data: yValues
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true
-        }
-    });
-
-</script>
+<script type="application/json" id="dashboard-data">{{ summary|tojson }}</script>
 {% endblock %}

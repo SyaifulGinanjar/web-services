@@ -1,71 +1,20 @@
-<div class="modal fade" id="modalCustomer" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalLabel">Tambah Customer</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form action="{{ url_for('tambah_customer')}}" method="POST">
-            <div class="row">
-                <div class="col">
-                    <label class="mb-1" for="spkInput">No. Surat Perintah Kerja</label>
-                    <input class="form-control" name="no_spk" id="spkInput" required placeholder="No. Spk" />
-                </div>
-                <div class="col">
-                    <label for="tglInput" class="mb-1">Tanggal Spk: </label>
-                    <input class="form-control" type="date" name="tgl_spk" id="tglInputk" required />
-                </div>
+<div class="modal fade" id="modalCustomer" tabindex="-1" aria-labelledby="modalCustomerLabel" aria-hidden="true"
+     {% if open_modal %}data-open-on-load{% endif %}>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form class="modal-content" action="{{ url_for('customer.create') }}" method="POST" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCustomerLabel">Tambah Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
-            <hr>
-            <div class="row mb-1">
-                <div class="col">
-                    <label for="namaInput" class="mb-1">Nama Customer: </label>
-                    <input class="form-control" name="nama" id="namaInput" required placeholder="Nama Customer" />
-                </div>
-                <div class="col">
-                    <label for="telpInput" class="mb-1">No. Telepon: </label>
-                    <input class="form-control" name="no_tlpn" id="telpInput" required placeholder="No. Telepon" />
-                </div>
+            <div class="modal-body">
+                {% with form = form if open_modal else none, errors = errors if open_modal else {} %}
+                {% include 'customer/_form.html' %}
+                {% endwith %}
             </div>
-            <div class="mb-3">
-                <label for="alamatInput" class="mb-1">Alamat: </label>
-                <input class="form-control" name="alamat" id="alamatInput" required placeholder="Alamat" />
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
             </div>
-            <hr>
-            <div class="row mb-3">
-                <label class="mb-1">Serial Number & Model Indoor: </label>
-                <div class="col">
-                    <input class="form-control" name="sn_indoor" required placeholder="Sn Indoor" />
-                </div>
-                <div class="col">
-                    <input class="form-control" name="model_indoor" required placeholder="Model Indoor" />
-                </div>
-            </div>
-            <div class="row mb-3">
-                <label class="mb-1">Serial Number & Model Outdoor: </label>
-                <div class="col">
-                    <input class="form-control" name="sn_outdoor" required placeholder="Sn Outdoor" />
-                </div>
-                <div class="col">
-                    <input class="form-control" name="model_outdoor" required placeholder="Model Outdoor" />
-                </div>
-            </div>
-            <hr>
-            <div class="mb-1">
-                <label for="kerusakanInput" class="mb-1">Kerusakan: </label>
-                <input class="form-control" name="kerusakan" id="kerusakanInput" required placeholder="Kerusakan" />
-            </div>
-            <div class="mb-3">
-                <label for="garansi" class="mb-1">Garansi: </label>
-                <select class="form-select" aria-label="Default select example" name="garansi" id="garansi" required>
-                  <option value="Under Warranty" selected>Under Warranty</option>
-                  <option value="Out Of Warranty">Out Of Warranty</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Simpan</button>
         </form>
-      </div>
     </div>
-  </div>
 </div>

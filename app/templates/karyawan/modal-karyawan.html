@@ -1,25 +1,20 @@
-<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-  	<div class="modal-dialog">
-    	<div class="modal-content">
-      		<div class="modal-header">
-        		<h5 class="modal-title" id="modalLabel">Tambah Karyawan</h5>
-        		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      		</div>
-      		<div class="modal-body">
-      	  		<form action="{{ url_for('tambah_karyawan') }}" method="POST">
-      	    		<div class="row">
-      	      			<div class="col mb-3">
-							<label for="namaInput" class="mb-1">Nama:</label>
-      	        			<input class="form-control" name="nama" id="namaInput" required placeholder="Nama Karayawan" />
-      	      			</div>
-      	      			<div class="col mb-3">
-							<label for="telpInput" class="mb-1">Nomor Telepon:</label>
-      	        			<input class="form-control" name="no_tlpn" id="telpInput" required placeholder="No. Telepon" />
-      	      			</div>
-      	    		</div>
-      	    		<button type="submit" class="btn btn-primary">Simpan</button>
-      	  		</form>
-      		</div>
-    	</div>
-  	</div>
+<div class="modal fade" id="modalKaryawan" tabindex="-1" aria-labelledby="modalKaryawanLabel" aria-hidden="true"
+     {% if open_modal %}data-open-on-load{% endif %}>
+    <div class="modal-dialog">
+        <form class="modal-content" action="{{ url_for('karyawan.create') }}" method="POST" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalKaryawanLabel">Tambah Karyawan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ ui.input('nama', 'Nama', form if open_modal, errors if open_modal, placeholder='Nama karyawan') }}
+                {{ ui.input('no_tlpn', 'No. Telepon', form if open_modal, errors if open_modal, type='tel', placeholder='08xxxxxxxxxx') }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
 </div>

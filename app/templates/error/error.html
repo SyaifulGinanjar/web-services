@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block body_class %}bg-body-tertiary{% endblock %}
+
+{% block body %}
+<main class="login-wrapper">
+    <div class="text-center">
+        <p class="display-1 fw-bold text-body-secondary mb-0">{{ code }}</p>
+        <h1 class="h4">{{ title }}</h1>
+        <p class="text-body-secondary">{{ message }}</p>
+        <a class="btn btn-primary" href="{{ url_for('dashboard.index') }}" data-no-nav>Kembali ke Dashboard</a>
+    </div>
+</main>
+{% endblock %}

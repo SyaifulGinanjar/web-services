@@ -1,32 +1,29 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Login - Data Service {% endblock %}
+{% block title %}Login{% endblock %}
+{% block body_class %}bg-body-tertiary{% endblock %}
 
-{% block layout %}
-<div class="d-grid justify-content-center align-items-center" style="min-height: 100dvh;">
-    <form class="p-3 border bg-white" style="width: 480px; height: fit-content;" method="POST">
-        <h3 class="text-center">Login</h3>
-        <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input class="form-control" id="username" placeholder="Enter name" name="username" required />
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Password" name="password"
-                required />
-        </div>
-        <div class="d-grid mb-3">
-            <button type="submit" class="btn btn-primary btn-block">Submit</button>
-        </div>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flashes">
-                {% for category, message in messages %}
-                    <p class="py-1 text-center {{ category }}">{{ message }}</p>
-                {% endfor %}
+{% block body %}
+<main class="login-wrapper">
+    <form class="card shadow-sm login-card" method="POST" novalidate>
+        <div class="card-body p-4">
+            <h1 class="h4 text-center mb-1">{{ app_name }}</h1>
+            <p class="text-center text-body-secondary mb-4">Masuk untuk melanjutkan</p>
+            {{ ui.flash_messages() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input class="form-control" id="username" name="username" value="{{ username or '' }}"
+                       autocomplete="username" required autofocus>
             </div>
-            {% endif %}
-        {% endwith %}
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password"
+                       autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </div>
     </form>
-</div>
+</main>
 {% endblock %}

@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
-    <title>{% block title %} {% endblock  %}</title>
-</head>
-<body>
-    {% block content %}
+<html lang="id">
 
-    {% endblock %}
-    <script src="js/script.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{% endblock %} - {{ app_name }}</title>
+
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <script defer src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='js/chart.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+  {% block body %}{% endblock %}
 </body>
 </html>

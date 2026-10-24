@@ -1,93 +1,73 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Customer - Data Service {% endblock %}
-{% block title_content %} Data Customer {% endblock %}
+{% block title %}Data Customer{% endblock %}
+{% block title_content %}Data Customer{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Customer', none)]) }}{% endblock %}
+{% block actions %}
+<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalCustomer">
+    {{ ui.icon('plus') }} Tambah Customer
+</button>
+{% endblock %}
 
 {% block content %}
 {% include 'customer/modal-customer.html' %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Data Customer</li>
-    </ol>
-</nav>
-<div class="border rounded p-3">
-    <div class="d-flex align-items-center justify-content-between">
-        <p class="fw-bold text-decoration-underline">DataTable Customer</p>
-        <div class="d-flex mb-3 justify-content-between">
-            <button class="btn btn-primary" id="tambah-customer">Tambah</button>
+<div class="card">
+    <div class="card-body">
+        {% call ui.table_toolbar(params, 'Cari no. SPK, nama, alamat, telepon, SN, model...') %}
+        {{ ui.filter_select('garansi', 'Garansi', garansi_options, params.filters.garansi) }}
+        {% endcall %}
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="table-fit text-center">No.</th>
+                        {{ ui.sort_th(params, 'no_spk', 'No. SPK') }}
+                        {{ ui.sort_th(params, 'tgl_spk', 'Tgl SPK', 'table-fit') }}
+                        {{ ui.sort_th(params, 'nama', 'Customer') }}
+                        {{ ui.sort_th(params, 'alamat', 'Alamat') }}
+                        <th>No. Telepon</th>
+                        <th>SN Indoor</th>
+                        {{ ui.sort_th(params, 'model_indoor', 'Model Indoor') }}
+                        <th>SN Outdoor</th>
+                        <th>Model Outdoor</th>
+                        <th>Kerusakan</th>
+                        {{ ui.sort_th(params, 'garansi', 'Garansi', 'table-fit') }}
+                        <th class="table-fit text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page.items %}
+                    <tr>
+                        <td class="text-center">{{ page.first_index + loop.index0 }}</td>
+                        <td class="text-nowrap">{{ data.no_spk }}</td>
+                        <td class="table-fit">{{ data.tgl_spk|tanggal }}</td>
+                        <td>{{ data.nama }}</td>
+                        <td>{{ data.alamat }}</td>
+                        <td class="table-fit">{{ data.no_tlpn }}</td>
+                        <td>{{ data.sn_indoor }}</td>
+                        <td>{{ data.model_indoor }}</td>
+                        <td>{{ data.sn_outdoor }}</td>
+                        <td>{{ data.model_outdoor }}</td>
+                        <td>{{ data.kerusakan }}</td>
+                        <td class="table-fit">
+                            <span class="badge {{ 'text-bg-primary' if data.garansi == 'Under Warranty' else 'text-bg-warning' }}">{{ data.garansi or '-' }}</span>
+                        </td>
+                        <td class="table-fit text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                {{ ui.edit_button(url_for('customer.edit', id=data.id)) }}
+                                {{ ui.delete_button(url_for('customer.delete', id=data.id), 'Hapus customer "' ~ data.nama ~ '"?') }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {{ ui.empty_row(13, params) }}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {{ ui.pagination(page) }}
     </div>
-    <table id="example" class="table table-sm table-bordered table-striped table-hover">
-        <thead class="thead-light">
-            <tr class="align-middle">
-                <th class="table-fit">No.</th>
-                <th>No. Spk</th>
-                <th class="text-center">Tgl Spk</th>
-                <th>Customer</th>
-                <th class="text-center">Alamat</th>
-                <th>No. Telepon</th>
-                <th>Sn Indoor</th>
-                <th>Model Indoor</th>
-                <th>Sn Outdoor</th>
-                <th>Model Outdoor</th>
-                <th>Kerusakan</th>
-                <th class="text-center">garansi</th>
-                <th class="table-fit text-center" colspan="2">Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for data in customer %}
-            <tr>
-                <td class="text-center">{{loop.index}}</td>
-                <td>{{data.no_spk}}</td>
-                <td class="table-fit">
-                    {{ data.tgl_spk.strftime('%d-%m-%Y') if data.tgl_spk else 'None' }}
-                </td>
-                <td>{{data.nama}}</td>
-                <td>{{data.alamat}}</td>
-                <td class="text-center table-fit">{{data.no_tlpn}}</td>
-                <td>{{data.sn_indoor}}</td>
-                <td>{{data.model_indoor}}</td>
-                <td>{{data.sn_outdoor}}</td>
-                <td>{{data.model_outdoor}}</td>
-                <td>{{data.kerusakan}}</td>
-                <td class="table-fit text-center">{{data.garansi}}</td>
-                <td class="text-center">
-                    <form action="{{ url_for('ubah_customer', id=data.id) }}">
-                        <button type="submit" class="btn btn-secondary btn-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-pencil preview-icon">
-                                <path
-                                    d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-                                <path d="m15 5 4 4" />
-                            </svg>
-                        </button>
-                    </form>
-                </td>
-                <td class="text-center">
-                    <form action="{{ url_for('hapus_customer', id=data.id) }}" method="POST">
-                        <button type="submit" class="btn btn-danger btn-sm"
-                            onclick="return confirm('Apakah anda yakin hapus?');">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-x preview-icon">
-                                <path d="M18 6 6 18" />
-                                <path d="m6 6 12 12" />
-                            </svg>
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </div>
-<script>
-    document.querySelector('#tambah-customer').addEventListener('click', function () {
-        var modalCustomer = new bootstrap.Modal(document.getElementById('modalCustomer'));
-        modalCustomer.show();
-    });    
-</script>
 {% endblock %}

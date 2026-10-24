@@ -1,58 +1,24 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Tambah Service - Data Service {% endblock %}
-{% block title_content %} Tambah Service {% endblock %}
+{% block title %}Jadwal Service{% endblock %}
+{% block title_content %}Jadwal Service{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Service', url_for('service.index')), ('Jadwal Service', none)]) }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for('data_services')}}">Data Service</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Jadwal Service</li>
-    </ol>
-</nav>
-<form action="{{ url_for('tambah_services', id=data.customer_id) }}" method="POST">
-    <div class="col-6">
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">No. SPK</label>
-                <input class="form-control" type="text" disabled value="{{ data.no_spk }}">
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Nama Customer: <i style="color: red;">*</i></label>
-                <input class="form-control" disabled value="{{ data.nama }}" />
-            </div>
-            <div class="col">
-                <label class="form-label">Nama Teknisi: </label>
-                <select class="form-control" name="teknisi_id">
-                    {% for list in teknisi %}
-                        <option value="{{list.id}}" {% if data.teknisi_id == list.id %} selected {% endif %}>{{list.nama}}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+<div class="card form-card">
+    <form class="card-body" action="{{ url_for('service.create', customer_id=customer.id) }}" method="POST" novalidate>
+        <dl class="row mb-3">
+            <dt class="col-sm-4">No. SPK</dt><dd class="col-sm-8">{{ customer.no_spk }}</dd>
+            <dt class="col-sm-4">Customer</dt><dd class="col-sm-8">{{ customer.nama }}</dd>
+            <dt class="col-sm-4">Tanggal SPK</dt><dd class="col-sm-8">{{ customer.tgl_spk|tanggal }}</dd>
+        </dl>
         <hr>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Tgl Kunjungan <i style="color: red;">*</i></label>
-                <input class="form-control" type="date" required name="tanggal_kunjungan" value="{{ data.tanggal_kunjungan }}" />
-            </div>
-            <div class="col">
-                <label class="form-label">Tgl Selesai <i style="color: red;">*</i></label>
-                <input class="form-control" type="date" required name="tanggal_selesai" value="{{ data.tanggal_selesai }}" />
-            </div>
+        {% include 'service/_form.html' %}
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('service.index') }}" class="btn btn-outline-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary">Tambahkan Jadwal</button>
         </div>
-        <hr>
-        <div class="mb-3">
-            <label class="form-label">Remark Unit <i style="color: red;">*</i></label>
-            <input class="form-control" name="remark_unit" value="{{data.remark_unit}}"/>
-        </div>
-        <div class="d-flex gap-1 justify-content-end">
-            <a href="{{ url_for('data_services') }}" class="btn btn-danger btn-block">Cancel</a>
-            <button type="submit" class="btn btn-primary btn-block">Tambahkan Jadwal</button>
-        </div>
-    </div>
-</form>
+    </form>
+</div>
 {% endblock %}

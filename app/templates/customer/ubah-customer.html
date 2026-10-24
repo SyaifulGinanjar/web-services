@@ -1,81 +1,18 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Ubah Customer - Data Service {% endblock %}
-{% block title_content %} Ubah Customer {% endblock %}
+{% block title %}Ubah Customer{% endblock %}
+{% block title_content %}Ubah Customer{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Customer', url_for('customer.index')), ('Ubah Customer', none)]) }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for('data_services')}}">Data Customer</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Ubah Customer</li>
-    </ol>
-</nav>
-<form action="{{ url_for('ubah_customer', id=data.id) }}" method="POST" class="row">
-    <div class="col-6">
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">No. Spk <i style="color: red;">*</i></label>
-                <input class="form-control" required name="no_spk" value="{{data.no_spk}}" />
-            </div>
-            <div class="col">
-                <label class="form-label">Tanggal Spk <i style="color: red;">*</i></label>
-                <input class="form-control" type="date" required name="tgl_spk" value="{{data.tgl_spk}}" />
-            </div>
+<div class="card form-card">
+    <form class="card-body" action="{{ url_for('customer.edit', id=data.id) }}" method="POST" novalidate>
+        {% include 'customer/_form.html' %}
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('customer.index') }}" class="btn btn-outline-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
         </div>
-        <hr>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Nama Customer<i style="color: red;">*</i></label>
-                <input class="form-control" required name="nama" value="{{ data.nama }}" />
-            </div>
-            <div class="col">
-                <label class="form-label">No. Telepon <i style="color: red;">*</i></label>
-                <input class="form-control" required name="no_tlpn" value="{{data.no_tlpn}}" />
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Alamat <i style="color: red;">*</i></label>
-            <input class="form-control" required name="alamat" value="{{ data.alamat }}" />
-        </div>
-        <hr>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Sn. Indoor <i style="color: red;">*</i></label>
-                <input class="form-control" required name="sn_indoor" value="{{data.sn_indoor}}" />
-            </div>
-            <div class="col">
-                <label class="form-label">Model Indoor <i style="color: red;">*</i></label>
-                <input class="form-control" required name="model_indoor" value="{{data.model_indoor}}" />
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Sn. Outdoor <i style="color: red;">*</i></label>
-                <input class="form-control" required name="sn_outdoor" value="{{data.sn_outdoor}}" />
-            </div>
-            <div class="col">
-                <label class="form-label">Model. Outdoor <i style="color: red;">*</i></label>
-                <input class="form-control" required name="model_outdoor" value="{{data.model_outdoor}}" />
-            </div>
-        </div>
-        <hr>
-        <div class="mb-3">
-            <label class="form-label">Kerusakan <i style="color: red;">*</i></label>
-            <input class="form-control" required name="kerusakan" value="{{data.kerusakan}}"/>
-        </div>
-        <div class="mb-3">
-            <label for="garansi" class="mb-1">Garansi: </label>
-            <select class="form-select" name="garansi" id="garansi" required>
-              <option value="Under Warranty" {% if data.garansi == 'Under Warranty' %} selected {% endif %}>Under Warranty</option>
-              <option value="Out Of Warranty" {% if data.garansi == 'Out Of Warranty' %} selected {% endif %}>Out Of Warranty</option>
-            </select>
-        </div>
-        <div class="d-flex gap-1 justify-content-end">
-            <a href="{{ url_for('data_customer') }}" class="btn btn-danger btn-block">Cancel</a>
-            <button type="submit" class="btn btn-primary btn-block">Submit</button>
-        </div>
-    </div>
-</form>
+    </form>
+</div>
 {% endblock %}

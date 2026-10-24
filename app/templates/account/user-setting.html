@@ -1,28 +1,22 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Setting - Data Service {% endblock %}
-{% block title_content %} Setting {% endblock %}
+{% block title %}User Setting{% endblock %}
+{% block title_content %}User Setting{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('User Setting', none)]) }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Setting</li>
-    </ol>
-</nav>
-<form class="row">
-    <h5 class="mb-3">Ganti Password</h5>
-    <div class="col-6">
-        <div class="mb-3">
-            <label for="passwordInput" class="form-label">Password saat ini <i style="color: red;">*</i></label>
-            <input type="password" class="form-control" id="passwordInput" name="password" required />
-        </div>
+<div class="card form-card">
+    <form class="card-body" method="POST" novalidate autocomplete="off">
+        <h2 class="h5 mb-3">Ganti Password</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {{ ui.input('password', 'Password saat ini', none, errors, type='password', attrs='autocomplete=current-password') }}
         <hr>
-        <div class="mb-3">
-            <label for="newPasswordInput" class="form-label">Password baru <i style="color: red;">*</i></label>
-            <input type="password" class="form-control" id="newPasswordInput" name="new_password" required />
+        {{ ui.input('new_password', 'Password baru', none, errors, type='password', attrs='autocomplete=new-password minlength=8') }}
+        {{ ui.input('confirm_password', 'Ulangi password baru', none, errors, type='password', attrs='autocomplete=new-password') }}
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Simpan Password</button>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Submit</button>
-    </div>
-</form>
+    </form>
+</div>
 {% endblock %}

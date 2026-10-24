@@ -1,22 +1,18 @@
-<aside class="d-none text-white pt-4" style="background-color: hsla(0, 0%, 0%, 0.90); width: 250px; height: 100%; padding-top: 5rem !important; z-index: 99;" id="sidebar">
-  <div class="position-relative h-100">
-    <p class="fs-6 fw-semibold mb-2 text-white-50 ps-3">Home</p>
-    <nav class="mb-4">
-        <a class="hover-menu-sidebar fw-medium ps-4 py-2 text-light fw-regular py-1 d-block" href="{{ url_for('home') }}">Dashboard</a>
-    </nav>
-    <p class="fs-6 fw-semibold mb-2 text-white-50 ps-3">Data</p>
-    <nav class="mb-4">
-        <a class="hover-menu-sidebar fw-medium ps-4 py-2 text-light fw-regular py-1 d-block" href="{{ url_for('data_customer') }}">Data Customer</a>
-        <a class="hover-menu-sidebar fw-medium ps-4 py-2 text-light fw-regular py-1 d-block" href="{{ url_for('data_services') }}">Data Service</a>
-        <a class="hover-menu-sidebar fw-medium ps-4 py-2 text-light fw-regular py-1 d-block" href="{{ url_for('data_karyawan') }}">Data Karyawan</a>
-    </nav>
-    <p class="fs-6 fw-semibold mb-2 text-white-50 ps-3">Setting</p>
-    <nav>
-        <a class="hover-menu-sidebar fw-medium ps-4 py-2 text-light fw-regular py-1 d-block" href="{{ url_for('user_setting') }}">User Setting</a>
-    </nav>
-    <div class="bg-dark position-absolute bottom-0 container-fluid px-3 py-3">
-        <p class="fw-medium text-white-50 mb-1">Login sebagai:</p>
-        <p class="fw-semibold">Admin</p>
+<aside class="app-sidebar text-white" id="sidebar">
+    <div class="sidebar-inner">
+        {% for group, items in nav_menu %}
+        <p class="sidebar-heading">{{ group }}</p>
+        <nav class="mb-4">
+            {% for endpoint, label, section in items %}
+            <a class="sidebar-link {% if active_section == section %}active{% endif %}"
+               href="{{ url_for(endpoint) }}" data-section="{{ section }}"
+               {% if active_section == section %}aria-current="page"{% endif %}>{{ label }}</a>
+            {% endfor %}
+        </nav>
+        {% endfor %}
     </div>
-  </div>
+    <div class="sidebar-footer">
+        <p class="text-white-50 small mb-1">Login sebagai:</p>
+        <p class="fw-semibold mb-0">{{ current_user }}</p>
+    </div>
 </aside>

@@ -1,16 +1,27 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
+{% import "components/macros.html" as ui with context %}
+
+{% block body_class %}app-shell{% endblock %}
+
+{% block body %}
+<div id="nav-progress" class="nav-progress" aria-hidden="true"></div>
 {% include 'components/navbar.html' %}
-
-{% block title %} {{title}} - Data Service {% endblock %}
-
-{% block layout %}
-<div class="d-flex h-100">
+<div class="app-body">
     {% include 'components/sidebar.html' %}
-    <div style="overflow-y: auto; width: 100%;">
-        <div class="pb-4" style="overflow-x: auto; overflow-y: hidden; margin-top: 3.5rem; padding: 1rem;">
-            <h1 class="mb-4">{% block title_content %} {% endblock %}</h1>
-            {% block content %} {% endblock %}
+    <div class="sidebar-backdrop" data-sidebar-close></div>
+
+    {# Hanya elemen ini yang diganti saat pindah halaman; navbar & sidebar tetap #}
+    <main id="app-content" class="app-content" tabindex="-1"
+          data-page="{% block page %}{% endblock %}" data-section="{{ active_section or '' }}">
+        {% block breadcrumb %}{% endblock %}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h1 class="h3 mb-0">{% block title_content %}{% endblock %}</h1>
+            <div class="d-flex gap-2">{% block actions %}{% endblock %}</div>
         </div>
-    </div>
+        {{ ui.flash_messages() }}
+        {% block content %}{% endblock %}
+    </main>
 </div>
+
+{% include 'components/confirm-modal.html' %}
 {% endblock %}

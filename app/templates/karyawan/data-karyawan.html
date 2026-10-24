@@ -1,78 +1,51 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Karyawan - Data Service {% endblock %}
-{% block title_content %} Data Karyawan {% endblock %}
+{% block title %}Data Karyawan{% endblock %}
+{% block title_content %}Data Karyawan{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Karyawan', none)]) }}{% endblock %}
+{% block actions %}
+<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalKaryawan">
+    {{ ui.icon('plus') }} Tambah Karyawan
+</button>
+{% endblock %}
 
 {% block content %}
 {% include 'karyawan/modal-karyawan.html' %}
-<nav aria-label="breadcrumb">
-	<ol class="breadcrumb">
-		<li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-		<li class="breadcrumb-item active" aria-current="page">Data Karyawan</li>
-	</ol>
-</nav>
-<div class="border rounded p-3">
-	<div class="d-flex align-items-center justify-content-between">
-		<p class="fw-bold text-decoration-underline">DataTable Karyawan</p>
-		<div class="d-flex mb-3 justify-content-between">
-			<button class="btn btn-primary btn-sm" id="tambah-karyawan">Tambah</button>
-		</div>
-	</div>
-	<table id="example" class="table table-sm table-bordered table-striped table-hover">
-		<thead>
-			<tr>
-				<th class="table-fit">No.</th>
-				<th>Nama</th>
-				<th>No. Telepon</th>
-				<th>Tanggal Masuk</th>
-				<th>Jabatan</th>
-				<th class="text-center" colspan="2">Aksi</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for data in karyawan %}
-			<tr class="align-middle">
-				<td class="text-center">{{ loop.index }}</td>
-				<td>{{data.nama}}</td>
-				<td>{{ data.no_tlpn if data.no_tlpn else 'Belum ada'}}</td>
-				<td>---</td> <!-- Tanggal Masuk -->
-				<td>---</td> <!-- Jabatan -->
-				<td class="table-fit">
-					<form action="{{ url_for('ubah_karyawan', id=data.id)}}">
-						<button type="submit" class="btn btn-secondary btn-sm">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-								stroke-linejoin="round" class="lucide lucide-pencil preview-icon">
-								<path
-									d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-								<path d="m15 5 4 4" />
-							</svg>
-						</button>
-					</form>
-				</td>
-				<td class="table-fit">
-					<form action="{{ url_for('hapus_karyawan', id=data.id) }}" method="POST">
-						<button type="submit" class="btn btn-danger btn-sm"
-							onclick="return confirm('Apakah anda yakin hapus?');">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-								stroke-linejoin="round" class="lucide lucide-x preview-icon">
-								<path d="M18 6 6 18" />
-								<path d="m6 6 12 12" />
-							</svg>
-						</button>
-					</form>
-				</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-</div>
+<div class="card">
+    <div class="card-body">
+        {% call ui.table_toolbar(params, 'Cari nama atau no. telepon...') %}{% endcall %}
 
-<script>
-	document.querySelector('#tambah-karyawan').addEventListener('click', function () {
-		var myModal = new bootstrap.Modal(document.getElementById('myModal'));
-		myModal.show();
-	});
-</script>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="table-fit text-center">No.</th>
+                        {{ ui.sort_th(params, 'nama', 'Nama') }}
+                        {{ ui.sort_th(params, 'no_tlpn', 'No. Telepon') }}
+                        <th class="table-fit text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page.items %}
+                    <tr>
+                        <td class="text-center">{{ page.first_index + loop.index0 }}</td>
+                        <td>{{ data.nama }}</td>
+                        <td>{{ data.no_tlpn or 'Belum ada' }}</td>
+                        <td class="table-fit text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                {{ ui.edit_button(url_for('karyawan.edit', id=data.id)) }}
+                                {{ ui.delete_button(url_for('karyawan.delete', id=data.id), 'Hapus karyawan "' ~ data.nama ~ '"?') }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {{ ui.empty_row(4, params) }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pagination(page) }}
+    </div>
+</div>
 {% endblock %}

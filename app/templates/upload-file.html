@@ -1,11 +1,21 @@
-{% extends "index.html" %}
+{% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Upload - Data Service {% endblock %}
+{% block title %}Upload File{% endblock %}
+{% block title_content %}Upload File{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Upload File', none)]) }}{% endblock %}
 
-{% block layout %}
-<h1>File Upload</h1>
-<form action = "/upload-file" method = "post" enctype="multipart/form-data">  
-    <input type="file" name="file" accept=".png, .jpg, .jpeg, image/jpeg">
-    <input type = "submit" value="Upload">  
-</form>  
+{% block content %}
+<div class="card form-card">
+    <form class="card-body" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label class="form-label" for="file">Gambar (PNG/JPG, maks. {{ config.MAX_CONTENT_LENGTH // 1024 // 1024 }} MB)</label>
+            <input class="form-control" type="file" id="file" name="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

@@ -1,0 +1,24 @@
+{# Field form customer; dipakai di modal tambah & halaman ubah. Butuh: form, errors, garansi_options #}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row">
+    {{ ui.input('no_spk', 'No. Surat Perintah Kerja', form, errors, placeholder='No. SPK', col='col-sm-6 mb-3') }}
+    {{ ui.input('tgl_spk', 'Tanggal SPK', form, errors, type='date', col='col-sm-6 mb-3') }}
+</div>
+<hr class="mt-0">
+<div class="row">
+    {{ ui.input('nama', 'Nama Customer', form, errors, placeholder='Nama customer', col='col-sm-6 mb-3') }}
+    {{ ui.input('no_tlpn', 'No. Telepon', form, errors, type='tel', placeholder='08xxxxxxxxxx', col='col-sm-6 mb-3') }}
+</div>
+{{ ui.input('alamat', 'Alamat', form, errors, placeholder='Alamat') }}
+<hr class="mt-0">
+<div class="row">
+    {{ ui.input('sn_indoor', 'SN Indoor', form, errors, placeholder='Serial number indoor', col='col-sm-6 mb-3') }}
+    {{ ui.input('model_indoor', 'Model Indoor', form, errors, placeholder='Model indoor', col='col-sm-6 mb-3') }}
+</div>
+<div class="row">
+    {{ ui.input('sn_outdoor', 'SN Outdoor', form, errors, placeholder='Serial number outdoor', col='col-sm-6 mb-3') }}
+    {{ ui.input('model_outdoor', 'Model Outdoor', form, errors, placeholder='Model outdoor', col='col-sm-6 mb-3') }}
+</div>
+<hr class="mt-0">
+{{ ui.input('kerusakan', 'Kerusakan', form, errors, placeholder='Deskripsi kerusakan') }}
+{{ ui.select('garansi', 'Garansi', garansi_options, form or {'garansi': 'Under Warranty'}, errors) }}

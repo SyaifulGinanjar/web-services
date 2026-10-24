@@ -1,113 +1,84 @@
 {% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
 
-{% block title %} Service - Data Service {% endblock %}
-{% block title_content %} Data Service {% endblock %}
+{% block title %}Data Service{% endblock %}
+{% block title_content %}Data Service{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Data Service', none)]) }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Data Service</li>
-    </ol>
-</nav>
-<div class="border rounded p-3">
-    <div class="d-flex align-items-center justify-content-between">
-        <p class="fw-bold text-decoration-underline">DataTable Service</p>
+<div class="card">
+    <div class="card-body">
+        {% call ui.table_toolbar(params, 'Cari no. SPK, customer, alamat, teknisi, keterangan...') %}
+        {{ ui.filter_select('status', 'Status', status_options, params.filters.status) }}
+        {{ ui.filter_select('teknisi_id', 'Teknisi', teknisi|options('id', 'nama'), params.filters.teknisi_id) }}
+        {% endcall %}
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="table-fit text-center">No.</th>
+                        {{ ui.sort_th(params, 'no_spk', 'No. SPK') }}
+                        {{ ui.sort_th(params, 'nama', 'Customer') }}
+                        <th>Alamat</th>
+                        <th>No. Telepon</th>
+                        {{ ui.sort_th(params, 'tgl_spk', 'Tgl SPK', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'tanggal_kunjungan', 'Tgl Kunjungan', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'tanggal_selesai', 'Tgl Selesai', 'text-nowrap') }}
+                        <th>Remark Unit</th>
+                        {{ ui.sort_th(params, 'teknisi', 'Teknisi') }}
+                        {{ ui.sort_th(params, 'waktu_service', 'Waktu', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'status', 'Status') }}
+                        <th>Keterangan</th>
+                        <th class="table-fit text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page.items %}
+                    <tr>
+                        <td class="text-center">{{ page.first_index + loop.index0 }}</td>
+                        <td class="text-nowrap">{{ data.no_spk }}</td>
+                        <td>{{ data.nama }}</td>
+                        <td>{{ data.alamat }}</td>
+                        <td class="text-nowrap">{{ data.no_tlpn }}</td>
+                        <td class="text-nowrap">{{ data.tgl_spk|tanggal }}</td>
+                        <td class="text-nowrap">{{ data.tanggal_kunjungan|tanggal }}</td>
+                        <td class="text-nowrap">{{ data.tanggal_selesai|tanggal }}</td>
+                        <td>{{ data.remark_unit or '-' }}</td>
+                        <td>{{ data.teknisi_nama or '-' }}</td>
+                        <td class="text-nowrap text-center">
+                            {{ (data.waktu_service ~ ' hari') if data.waktu_service is not none else '-' }}
+                        </td>
+                        <td class="text-nowrap">
+                            {% if not data.service_id %}
+                            <span class="badge text-bg-secondary">Belum dijadwalkan</span>
+                            {% elif data.status_pekerjaan == 'completed' %}
+                            <span class="badge text-bg-success">Completed</span>
+                            {% else %}
+                            <span class="badge text-bg-warning">In progress</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ data.keterangan_service or '-' }}</td>
+                        <td class="table-fit text-center">
+                            {% if data.service_id %}
+                            <div class="d-flex gap-1 justify-content-center">
+                                {{ ui.edit_button(url_for('service.edit', id=data.service_id)) }}
+                                {{ ui.delete_button(url_for('service.delete', id=data.service_id), 'Hapus data service untuk "' ~ data.nama ~ '"?') }}
+                            </div>
+                            {% else %}
+                            <a href="{{ url_for('service.create', customer_id=data.customer_id) }}" class="btn btn-success btn-sm text-nowrap">
+                                {{ ui.icon('calendar') }} Jadwalkan
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    {{ ui.empty_row(14, params) }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pagination(page) }}
     </div>
-    <table id="example" class="table table-sm table-bordered table-striped table-hover">
-        <thead class="thead-light">
-            <tr class="align-middle">
-                <th class="table-fit">No.</th>
-                <th class="px-2">No. SPK</th>
-                <th class="px-2">Customer</th>
-                <th class="px-2">Alamat</th>
-                <th class="px-2 text-center">No. Telepon</th>
-                <th class="px-2">Tgl. SPK</th>
-                <th class="px-2">Tgl. Kunjungan</th>
-                <th class="px-2">Tgl. Selesai</th>
-                <th class="px-2">Remark Unit</th>
-                <th class="px-2">Teknisi</th>
-                <th class="px-2">Waktu Service</th>
-                <th class="px-2 text-center">Status</th>
-                <th class="px-2 text-center">Keterangan</th>
-                <th class="px-2 text-center" colspan="2">Aksi</th>
-            </tr>
-        </thead>
-        {% for data in service %}
-        <tr>
-            <td class="text-center">{{ loop.index }}</td>
-            <td class="px-2">{{data.no_spk}}</td>
-            <td class="px-2">{{data.nama}}</td>
-            <td class="px-2">{{data.alamat}}</td>
-            <td class="px-2 text-center">{{data.no_tlpn}}</td>
-            <td class="px-2">
-                {{ data.tgl_spk.strftime('%d-%m-%Y') if data.tanggal_kunjungan else 'None' }}
-            </td>
-            <td class="px-2">
-                {{ data.tanggal_kunjungan.strftime('%d-%m-%Y') if data.tanggal_kunjungan else 'None' }}
-            </td>
-            <td class="px-2">
-                {{ data.tanggal_selesai.strftime('%d-%m-%Y') if data.tanggal_selesai else 'None' }}
-            </td>
-            <td class="px-2">{{data.remark_unit}}</td>
-            <td class="px-2">{{data['teknisi.nama']}}</td>
-            <td class="px-2 text-center">
-                {% if data.waktu_service is none %}
-                belum ada
-                {%else%}
-                {{data.waktu_service}} Hari
-                {% endif %}
-            </td>
-            <td class="px-2 text-center">
-                {{ data['status_pekerjaan'] if data['status_pekerjaan'] else 'Belum' }}
-            </td>
-            <td class="px-2 text-center">{{ data['keterangan_service'] }}</td>
-            {% if data['service_ac.id'] %}
-            <td class="table-fit text-center px-2">
-                <form action="{{ url_for('ubah_services', id=data['service_ac.id'])}}">
-                    <button type="submit" class="btn btn-secondary btn-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-pencil preview-icon">
-                            <path
-                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-                            <path d="m15 5 4 4" />
-                        </svg>
-
-                    </button>
-                </form>
-            </td>
-            <td class="table-fit text-center px-2">
-                <form action="{{ url_for('hapus_services', id=data['service_ac.id'])}}">
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="lucide lucide-x preview-icon">
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
-                        </svg>
-
-                    </button>
-                </form>
-            </td>
-            {%else%}
-            <td class="align-middle table-fit text-center px-2">
-                Tambah
-            </td>
-            <td class="table-fit text-center px-2">
-                <form action="{{ url_for('tambah_services', id=data.id)}}">
-                    <button type="submit" class="btn btn-success btn-sm">Jadwal</button>
-                </form>
-            </td>
-            {% endif %}
-        </tr>
-        {% endfor %}
-    </table>
 </div>
-<script>
-    document.querySelector('#tambah-service').addEventListener('click', function () {
-        var modalService = new bootstrap.Modal(document.getElementById('modalService'));
-        modalService.show();
-    });    
-</script>
 {% endblock %}

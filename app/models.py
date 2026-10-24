@@ -1,328 +1,251 @@
-import pymysql
-from pymysql.cursors import DictCursor
-import os
+import hmac
+from decimal import Decimal
+
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app.db import execute, fetch_all, fetch_one, get_db
+from app.pagination import Page
+
+# Batas KPI (hari sejak tanggal SPK)
+KPI_KUNJUNGAN_MAKS_HARI = 1
+KPI_SELESAI_MAKS_HARI = 3
 
 
-class Database:
-    def koneksi(self):
-        return pymysql.connect(
-            host="acela.proxy.rlwy.net",
-            user="root",
-            password="eYhoRiUHdZXRnYynxFKAgWWGqbUFMbKm",
-            database="railway",
-            port=int(20194),
-            cursorclass=DictCursor
-        )
-
-class Services:
-    def tampil_services(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select customer.id, 
-                            customer.no_spk, 
-                            customer.nama, 
-                            customer.alamat, 
-                            customer.no_tlpn,
-                            customer.tgl_spk, 
-                            service_ac.id,
-                            service_ac.tanggal_kunjungan, 
-                            service_ac.tanggal_selesai, 
-                            service_ac.remark_unit, 
-                            teknisi.nama,
-                            datediff(service_ac.tanggal_selesai+1, customer.tgl_spk) as waktu_service,
-                            service_ac.status_pekerjaan, 
-                            service_ac.keterangan_service
-                            from customer left join service_ac on customer.id = service_ac.customer_id 
-                            left join teknisi on service_ac.teknisi_id = teknisi.id ''')
-        data = cursor.fetchall()
-        return data
-
-    def tambah_services(self, customer_id, teknisi_id, tanggal_kunjungan, tanggal_selesai, remak_unit):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = '''insert into service_ac 
-                    (customer_id, 
-                    teknisi_id, 
-                    tanggal_kunjungan, 
-                    tanggal_selesai, 
-                    remark_unit) 
-                    values (%s, %s, %s, %s, %s)'''
-        cursor.execute(query,(customer_id, teknisi_id, tanggal_kunjungan, tanggal_selesai, remak_unit))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+def paginate(params, select, from_where, args=(), tiebreak='id'):
+    total = fetch_one(f'select count(*) as total {from_where}', args)['total']
+    page = Page([], total, params.page, params.per_page)
+    offset = (page.page - 1) * page.per_page
+    page.items = fetch_all(
+        f'select {select} {from_where} order by {params.order_by}, {tiebreak} desc limit %s offset %s',
+        (*args, page.per_page, offset),
+    )
+    return page
 
 
-    def ubah_services(self, teknisi_id, tanggal_kunjungan, tanggal_selesai, remak_unit, status_pekerjaa, keterangan_service,id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = ('''update service_ac set 
-                 teknisi_id= %s,
-                 tanggal_kunjungan = %s,
-                 tanggal_selesai = %s, 
-                 remark_unit = %s,
-                 status_pekerjaan = %s,
-                 keterangan_service = %s 
-                 where id = %s''')
-        cursor.execute(query,(teknisi_id, tanggal_kunjungan, tanggal_selesai, remak_unit,status_pekerjaa, keterangan_service, id))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+def to_int(row):
+    """SUM() di MySQL menghasilkan Decimal/None; ubah ke int agar bisa di-JSON-kan."""
+    return {k: int(v) if isinstance(v, Decimal) else (0 if v is None else v) for k, v in row.items()}
 
-    def form_tambah_services(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select customer.id as customer_id,
-                            customer.no_spk, 
-                            customer.nama, 
-                            teknisi.id as teknisi_id,
-                            service_ac.remark_unit, 
-                            service_ac.tanggal_kunjungan, 
-                            service_ac.tanggal_selesai 
-                            from customer left join service_ac on customer.id = service_ac.customer_id 
-                            left join teknisi on service_ac.teknisi_id = teknisi.id where customer.id = %s''', (id,))
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        print(data)
-        return data
 
-    def form_ubah_services(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select service_ac.id, 
-                    service_ac.customer_id ,
-                    customer.nama,
-                    service_ac.teknisi_id,
-                    service_ac.tanggal_kunjungan,
-                    service_ac.tanggal_selesai,
-                    service_ac.remark_unit,
-                    service_ac.status_pekerjaan,
-                    service_ac.keterangan_service
-                    from service_ac join customer on service_ac.customer_id = customer.id
-                    where service_ac.id = %s''', (id,))
-        data = cursor.fetchall()
-        print(data)
-        return data
-
-    def hapus_services(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = "delete from service_ac where id = %s"
-        cursor.execute(query, (id,))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
-
-    def selisih_service(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor()
-        cursor.execute('''select customer.id, 
-                            customer.tgl_spk, 
-                            service_ac.tanggal_selesai 
-                            from customer join service_ac on customer.id = service_ac.customer_id''')
-        data = cursor.fetchall()
-        for row in data:
-            service_id = row[0]
-            tgl_spk = row[1]
-            tgl_selesai = row[2]
-            print(tgl_spk)
-            print(tgl_selesai)
-            waktu_service = (tgl_selesai - tgl_spk).days
-            cursor.execute('update service_ac set selisih = %s where id = %s', (waktu_service, service_id))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
-
-    def tampil_detail_services(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute("Select * from service_ac")
-        data = cursor.fetchall()
-        return data
-#Customer
+# Customer
 class Customers:
-    def tampil_customers(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute("select * from customer")
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        return data
+    FIELDS = ('no_spk', 'nama', 'alamat', 'no_tlpn', 'sn_indoor', 'model_indoor',
+              'sn_outdoor', 'model_outdoor', 'tgl_spk', 'kerusakan', 'garansi')
+    SORTABLE = {
+        'no_spk': 'no_spk', 'tgl_spk': 'tgl_spk', 'nama': 'nama', 'alamat': 'alamat',
+        'garansi': 'garansi', 'model_indoor': 'model_indoor',
+    }
+    GARANSI = ('Under Warranty', 'Out Of Warranty')
+
+    def paginate(self, params):
+        where, args = ['1=1'], []
+        if params.q:
+            where.append('(no_spk like %s or nama like %s or alamat like %s or no_tlpn like %s '
+                         'or sn_indoor like %s or sn_outdoor like %s or model_indoor like %s '
+                         'or model_outdoor like %s or kerusakan like %s)')
+            args += [params.like] * 9
+        if params.filters.get('garansi') in self.GARANSI:
+            where.append('garansi = %s')
+            args.append(params.filters['garansi'])
+        return paginate(params, '*', f"from customer where {' and '.join(where)}", tuple(args))
+
+    def get(self, id):
+        return fetch_one('select * from customer where id = %s', (id,))
+
+    def create(self, data):
+        columns = ', '.join(self.FIELDS)
+        placeholders = ', '.join(['%s'] * len(self.FIELDS))
+        return execute(f'insert into customer ({columns}) values ({placeholders})',
+                       tuple(data[f] for f in self.FIELDS))
+
+    def update(self, id, data):
+        assignments = ', '.join(f'{f} = %s' for f in self.FIELDS)
+        execute(f'update customer set {assignments} where id = %s',
+                (*(data[f] for f in self.FIELDS), id))
+
+    def delete(self, id):
+        execute('delete from customer where id = %s', (id,))
 
 
-    def tambah_customers(self, no_spk, nama, alamat, no_tlpn, sn_indoor, model_indoor, sn_outdoor, model_outdoor,
-                          tgl_spk, kerusakan, garansi):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = 'insert into customer (no_spk ,nama, alamat, no_tlpn, sn_indoor, model_indoor, sn_outdoor, model_outdoor, tgl_spk, kerusakan, garansi) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-        cursor.execute(query, (no_spk, nama, alamat, no_tlpn, sn_indoor, model_indoor, sn_outdoor,
-                                  model_outdoor, tgl_spk, kerusakan, garansi))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+# Service
+class Services:
+    STATUS = ('in progress', 'completed')
+    SORTABLE = {
+        'no_spk': 'c.no_spk', 'nama': 'c.nama', 'tgl_spk': 'c.tgl_spk',
+        'tanggal_kunjungan': 's.tanggal_kunjungan', 'tanggal_selesai': 's.tanggal_selesai',
+        'teknisi': 't.nama', 'waktu_service': 'waktu_service', 'status': 's.status_pekerjaan',
+    }
 
-    def ubah_customers(self,
-                       no_spk, nama, alamat, no_tlpn, sn_indoor, model_indoor,
-                       sn_outdoor, model_outdoor, tgl_spk, kerusakan, garansi, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = ('''update customer set no_spk = %s,
-                 nama = %s,
-                 alamat = %s, 
-                 no_tlpn = %s, 
-                 sn_indoor = %s,
-                 model_indoor = %s,
-                 sn_outdoor = %s,
-                 model_outdoor = %s,
-                 tgl_spk = %s,
-                 kerusakan = %s,
-                 garansi = %s where id = %s''')
-        cursor.execute(query, (no_spk, nama,alamat, no_tlpn, sn_indoor,
-                               model_indoor, sn_outdoor,model_outdoor, tgl_spk, kerusakan, garansi, id))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+    def paginate(self, params):
+        where, args = ['1=1'], []
+        if params.q:
+            where.append('(c.no_spk like %s or c.nama like %s or c.alamat like %s or c.no_tlpn like %s '
+                         'or s.remark_unit like %s or t.nama like %s or s.keterangan_service like %s)')
+            args += [params.like] * 7
 
-    def form_ubah_customer(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute("select * from customer where id = %s",(id,))
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        return data
+        status = params.filters.get('status')
+        if status == 'belum':
+            where.append('s.id is null')
+        elif status in self.STATUS:
+            where.append('s.status_pekerjaan = %s')
+            args.append(status)
 
-    def hapus_customer(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = "delete from customer where id = %s"
-        cursor.execute(query, (id,))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+        teknisi_id = params.filters.get('teknisi_id')
+        if teknisi_id and teknisi_id.isdigit():
+            where.append('s.teknisi_id = %s')
+            args.append(int(teknisi_id))
 
-#Teknisi
+        select = '''c.id as customer_id, c.no_spk, c.nama, c.alamat, c.no_tlpn, c.tgl_spk,
+                    s.id as service_id, s.tanggal_kunjungan, s.tanggal_selesai, s.remark_unit,
+                    s.status_pekerjaan, s.keterangan_service, t.nama as teknisi_nama,
+                    datediff(s.tanggal_selesai, c.tgl_spk) + 1 as waktu_service'''
+        from_where = f'''from customer c
+                         left join service_ac s on c.id = s.customer_id
+                         left join teknisi t on s.teknisi_id = t.id
+                         where {' and '.join(where)}'''
+        return paginate(params, select, from_where, tuple(args), tiebreak='c.id')
+
+    def get(self, id):
+        return fetch_one('''select s.*, c.nama, c.no_spk, c.tgl_spk
+                            from service_ac s join customer c on s.customer_id = c.id
+                            where s.id = %s''', (id,))
+
+    def create(self, customer_id, data):
+        return execute('''insert into service_ac
+                          (customer_id, teknisi_id, tanggal_kunjungan, tanggal_selesai, remark_unit, status_pekerjaan)
+                          values (%s, %s, %s, %s, %s, %s)''',
+                       (customer_id, data['teknisi_id'], data['tanggal_kunjungan'],
+                        data['tanggal_selesai'], data['remark_unit'], 'in progress'))
+
+    def update(self, id, data):
+        execute('''update service_ac set teknisi_id = %s, tanggal_kunjungan = %s, tanggal_selesai = %s,
+                   remark_unit = %s, status_pekerjaan = %s, keterangan_service = %s
+                   where id = %s''',
+                (data['teknisi_id'], data['tanggal_kunjungan'], data['tanggal_selesai'],
+                 data['remark_unit'], data['status_pekerjaan'], data['keterangan_service'], id))
+
+    def delete(self, id):
+        execute('delete from service_ac where id = %s', (id,))
+
+
+# Teknisi / Karyawan
 class Teknisi:
-    def tampil_teknisi(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute("select * from teknisi")
-        data = cursor.fetchall()
-        return data
+    SORTABLE = {'nama': 'nama', 'no_tlpn': 'no_tlpn', 'id': 'id'}
 
-    def ubah_teknisi(self,id, nama, no_tlpn):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = "update teknisi set nama = %s, no_tlpn = %s where id = %s"
-        cursor.execute(query, (nama, no_tlpn, id))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+    def paginate(self, params):
+        where, args = '1=1', ()
+        if params.q:
+            where = '(nama like %s or no_tlpn like %s)'
+            args = (params.like, params.like)
+        return paginate(params, '*', f'from teknisi where {where}', args)
 
+    def all(self):
+        return fetch_all('select id, nama from teknisi order by nama')
 
-    def form_ubah_teknisi(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute("select * from teknisi where id = %s",(id,))
-        data = cursor.fetchall()
-        return data
+    def get(self, id):
+        return fetch_one('select * from teknisi where id = %s', (id,))
 
+    def create(self, data):
+        return execute('insert into teknisi (nama, no_tlpn) values (%s, %s)', (data['nama'], data['no_tlpn']))
 
-    def tambah_teknisi(self, nama, no_tlpn):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = "INSERT INTO teknisi (nama, no_tlpn) VALUES (%s, %s)"
-        cursor.execute(query, (nama, no_tlpn))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+    def update(self, id, data):
+        execute('update teknisi set nama = %s, no_tlpn = %s where id = %s', (data['nama'], data['no_tlpn'], id))
+
+    def delete(self, id):
+        execute('delete from teknisi where id = %s', (id,))
 
 
-    def hapus_teknisi(self, id):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        query = "delete from teknisi where id = %s"
-        cursor.execute(query, (id,))
-        koneksi.commit()
-        cursor.close()
-        koneksi.close()
+# Dashboard
+class Dashboard:
+    def _period(self, tahun, bulan):
+        where, args = ['1=1'], []
+        if tahun:
+            where.append('year(c.tgl_spk) = %s')
+            args.append(tahun)
+        if bulan:
+            where.append('month(c.tgl_spk) = %s')
+            args.append(bulan)
+        return ' and '.join(where), tuple(args)
+
+    def years(self):
+        rows = fetch_all('select distinct year(tgl_spk) as tahun from customer '
+                         'where tgl_spk is not null order by tahun desc')
+        return [r['tahun'] for r in rows]
+
+    def summary(self, tahun=None, bulan=None):
+        where, args = self._period(tahun, bulan)
+        base = f'from customer c left join service_ac s on s.customer_id = c.id where {where}'
+
+        totals = fetch_one(f'''select count(distinct c.id) as total_customer,
+                                      count(s.id) as total_pekerjaan,
+                                      sum(s.status_pekerjaan = 'completed') as selesai,
+                                      sum(s.id is not null and coalesce(s.status_pekerjaan, '') <> 'completed') as proses,
+                                      sum(s.id is null) as belum_dijadwalkan
+                               {base}''', args)
+
+        kpi = fetch_one(f'''select
+                sum(datediff(s.tanggal_kunjungan, c.tgl_spk) <= {KPI_KUNJUNGAN_MAKS_HARI}) as kunjungan_ok,
+                sum(datediff(s.tanggal_kunjungan, c.tgl_spk) > {KPI_KUNJUNGAN_MAKS_HARI}) as kunjungan_gagal,
+                sum(datediff(s.tanggal_selesai, c.tgl_spk) <= {KPI_SELESAI_MAKS_HARI}) as selesai_ok,
+                sum(datediff(s.tanggal_selesai, c.tgl_spk) > {KPI_SELESAI_MAKS_HARI}) as selesai_gagal
+                {base}''', args)
+
+        garansi = fetch_all(f'''select coalesce(c.garansi, 'Tidak diketahui') as label, count(*) as total
+                                from customer c where {where} group by label order by label''', args)
+
+        teknisi = fetch_all(f'''select t.nama as label, count(s.id) as total,
+                                       sum(s.status_pekerjaan = 'completed') as selesai
+                                from service_ac s
+                                join teknisi t on t.id = s.teknisi_id
+                                join customer c on c.id = s.customer_id
+                                where {where}
+                                group by t.id, t.nama order by total desc''', args)
+
+        unit = fetch_all(f'''select coalesce(nullif(c.model_indoor, ''), '-') as label, count(*) as total
+                             from customer c where {where}
+                             group by label order by total desc limit 10''', args)
+
+        return {
+            'totals': to_int(totals),
+            'kpi': to_int(kpi),
+            'garansi': [to_int(r) for r in garansi],
+            'teknisi': [to_int(r) for r in teknisi],
+            'unit': [to_int(r) for r in unit],
+            'batas': {'kunjungan': KPI_KUNJUNGAN_MAKS_HARI, 'selesai': KPI_SELESAI_MAKS_HARI},
+        }
 
 
-#Data 3 Hari Service
-class Complation:
-    def tampil_data_complation(self, bulan):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select customer.no_spk,
-                            customer.nama,
-                            customer.alamat,
-                            customer.tgl_spk,
-                            service_ac.tanggal_selesai,
-                            service_ac.keterangan_service,
-                            datediff(service_ac.tanggal_selesai, customer.tgl_spk) as waktu_service
-                            from service_ac join customer on customer.id = service_ac.customer_id
-                            where month(service_ac.tanggal_selesai) = %s and datediff(service_ac.tanggal_selesai, customer.tgl_spk) = 3''', (bulan,))
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        return data
+# Pengguna / Login
+class Users:
+    @staticmethod
+    def _verify(stored, password):
+        if not stored:
+            return False
+        # Mendukung password yang sudah di-hash maupun data lama (plaintext)
+        if stored.startswith(('scrypt:', 'pbkdf2:')):
+            return check_password_hash(stored, password)
+        return hmac.compare_digest(stored.encode(), password.encode())
 
+    def authenticate(self, username, password):
+        user = fetch_one('select username, password from pengguna where username = %s', (username,))
+        return bool(user) and self._verify(user['password'], password)
 
-#Data Chart
-class Chart:
-    def tampil_semua_chart_by_month(self, bulan):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select customer.no_spk,
-                            customer.nama,
-                            customer.alamat,
-                            customer.tgl_spk,
-                            service_ac.tanggal_selesai,
-                            service_ac.keterangan_service,
-                            datediff(service_ac.tanggal_selesai, customer.tgl_spk) as waktu_service
-                            from service_ac join customer on customer.id = service_ac.customer_id
-                            where month(service_ac.tanggal_selesai) = %s ''', (bulan,))
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        return data
-
-#Data 1 Hari Service
-class Dispath:
-    def tampil_data_dispath(self, bulan):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor(DictCursor)
-        cursor.execute('''select customer.no_spk,
-                                    customer.nama,
-                                    customer.alamat,
-                                    customer.tgl_spk,
-                                    service_ac.tanggal_selesai,
-                                    service_ac.keterangan_service,
-                                    datediff(service_ac.tanggal_selesai, customer.tgl_spk) as waktu_service
-                                    from service_ac join customer on customer.id = service_ac.customer_id
-                                    where month(service_ac.tanggal_selesai) = %s 
-                                    and datediff(service_ac.tanggal_selesai, customer.tgl_spk) between 1 and 2''',(bulan,))
-        data = cursor.fetchall()
-        cursor.close()
-        koneksi.close()
-        return data
-
-#Login
-class Login (object):
-    def __init__(self, username=None, password=None):
-        self.username = username
-        self.password = password
-
-    def authenticate(self):
-        koneksi = Database().koneksi()
-        cursor = koneksi.cursor()
-        cursor.execute("select count(*) as total from pengguna where username = %s and password = %s",(self.username, self.password) )
-        data = cursor.fetchone()
-        n = data['total']
-        print(n)
-        print(type(n))
-        cursor.close()
-        koneksi.close()
-        return True if n == 1 else False
+    def change_password(self, username, current_password, new_password):
+        """Return True jika berhasil. Hash diverifikasi ulang sebelum commit
+        supaya tidak terkunci jika kolom password terlalu pendek."""
+        if not self.authenticate(username, current_password):
+            return False
+        hashed = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db = get_db()
+        try:
+            with db.cursor() as cursor:
+                cursor.execute('update pengguna set password = %s where username = %s', (hashed, username))
+                cursor.execute('select password from pengguna where username = %s', (username,))
+                stored = cursor.fetchone()['password']
+            if stored != hashed:
+                raise RuntimeError('Kolom password terlalu pendek untuk menyimpan hash.')
+            db.commit()
+            return True
+        except Exception:
+            db.rollback()
+            raise

@@ -1,0 +1,9 @@
+{# Field jadwal service. Butuh: form, errors, teknisi #}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{{ ui.select('teknisi_id', 'Teknisi', teknisi|options('id', 'nama'),
+             form, errors, placeholder='-- Pilih teknisi --') }}
+<div class="row">
+    {{ ui.input('tanggal_kunjungan', 'Tanggal Kunjungan', form, errors, type='date', col='col-sm-6 mb-3') }}
+    {{ ui.input('tanggal_selesai', 'Tanggal Selesai', form, errors, type='date', col='col-sm-6 mb-3') }}
+</div>
+{{ ui.input('remark_unit', 'Remark Unit', form, errors, required=False, placeholder='Catatan kondisi unit') }}
