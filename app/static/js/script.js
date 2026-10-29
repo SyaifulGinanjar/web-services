@@ -290,7 +290,7 @@
         }));
       };
 
-      const bar = (id, labels, datasets, horizontal = false) => {
+      const bar = (id, labels, datasets, horizontal = false, stacked = false) => {
         const canvas = $(`#${id}`, root);
         if (!canvas) return;
         charts.push(new Chart(canvas, {
@@ -299,7 +299,10 @@
           options: {
             indexAxis: horizontal ? 'y' : 'x',
             maintainAspectRatio: false,
-            scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { beginAtZero: true, ticks: { precision: 0 } } },
+            scales: {
+              x: { stacked, beginAtZero: true, ticks: { precision: 0 } },
+              y: { stacked, beginAtZero: true, ticks: { precision: 0 } },
+            },
             plugins: { legend: { display: datasets.length > 1, position: 'bottom' } },
           },
         }));
@@ -310,10 +313,12 @@
       pie('chartKunjungan', ['Sesuai target', 'Melewati target'], [kpi.dispatch_ok, kpi.dispatch_gagal], ['#198754', '#dc3545']);
       pie('chartSelesai', ['Sesuai target', 'Melewati target'], [kpi2.completion_ok, kpi2.completion_gagal], ['#198754', '#dc3545']);
       pie('chartGaransi', data.garansi.map((r) => r.label), data.garansi.map((r) => r.total), ['#0d6efd', '#ffc107', '#adb5bd']);
+      // Service + Service Tambahan ditumpuk (= total pekerjaan), Selesai sebagai batang terpisah
       bar('chartTeknisi', data.teknisi.map((r) => r.label), [
-        { label: 'Total pekerjaan', data: data.teknisi.map((r) => r.total), backgroundColor: '#0d6efd' },
-        { label: 'Selesai', data: data.teknisi.map((r) => r.selesai), backgroundColor: '#198754' },
-      ]);
+        { label: 'Service', data: data.teknisi.map((r) => r.service), backgroundColor: '#0d6efd', stack: 'pekerjaan' },
+        { label: 'Service Tambahan', data: data.teknisi.map((r) => r.tambahan), backgroundColor: '#6ea8fe', stack: 'pekerjaan' },
+        { label: 'Selesai', data: data.teknisi.map((r) => r.selesai), backgroundColor: '#198754', stack: 'selesai' },
+      ], false, true);
       bar('chartUnit', data.unit.map((r) => r.label), [
         { label: 'Jumlah unit', data: data.unit.map((r) => r.total), backgroundColor: '#6f42c1' },
       ], true);
