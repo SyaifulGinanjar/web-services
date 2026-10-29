@@ -317,16 +317,16 @@ class Dashboard:
         where, args = self._period(tahun, bulan)
         where_st, args_st = self._period(tahun, bulan, 'st.tgl_spk')
         rows = fetch_all(f'''select t.id, t.nama, count(*) as jumlah,
-                                    coalesce(sum(case when p.sumber = 'service' then p.biaya end), 0) as service,
-                                    coalesce(sum(case when p.sumber = 'tambahan' then p.biaya end), 0) as tambahan,
+                                    coalesce(sum(case when p.tambahan = 0 then p.biaya end), 0) as service,
+                                    coalesce(sum(case when p.tambahan = 1 then p.biaya end), 0) as tambahan,
                                     coalesce(sum(p.biaya), 0) as total
                              from (
-                                 select 'service' as sumber, s.teknisi_id, s.biaya
+                                 select 0 as tambahan, s.teknisi_id, s.biaya
                                  from service_ac s join customer c on c.id = s.customer_id
                                  where c.garansi = 'Out Of Warranty' and s.status_pekerjaan = 'completed'
                                        and {where}
                                  union all
-                                 select 'tambahan', st.teknisi_id, st.biaya
+                                 select 1, st.teknisi_id, st.biaya
                                  from service_tambahan st join customer c on c.id = st.customer_id
                                  where c.garansi = 'Out Of Warranty' and st.status_pekerjaan = 'completed'
                                        and {where_st}
@@ -382,13 +382,25 @@ class Dashboard:
         garansi = fetch_all(f'''select coalesce(c.garansi, 'Tidak diketahui') as label, count(*) as total
                                 from customer c where {where} group by label order by label''', args)
 
-        teknisi = fetch_all(f'''select t.nama as label, count(s.id) as total,
-                                       sum(s.status_pekerjaan = 'completed') as selesai
-                                from service_ac s
-                                join teknisi t on t.id = s.teknisi_id
-                                join customer c on c.id = s.customer_id
-                                where {where}
-                                group by t.id, t.nama order by total desc''', args)
+        # Kinerja karyawan: gabungan Service dan Service Tambahan.
+        # Kolom di UNION sengaja angka (bukan teks) supaya tidak bentrok collation antar tabel.
+        where_st, args_st = self._period(tahun, bulan, 'st.tgl_spk')
+        teknisi = fetch_all(f'''select t.nama as label, count(*) as total,
+                                       sum(p.tambahan = 0) as service,
+                                       sum(p.tambahan = 1) as tambahan,
+                                       sum(p.selesai) as selesai
+                                from (
+                                    select 0 as tambahan, s.teknisi_id,
+                                           (s.status_pekerjaan = 'completed') as selesai
+                                    from service_ac s join customer c on c.id = s.customer_id
+                                    where {where}
+                                    union all
+                                    select 1, st.teknisi_id, (st.status_pekerjaan = 'completed')
+                                    from service_tambahan st
+                                    where st.teknisi_id is not null and {where_st}
+                                ) p
+                                join teknisi t on t.id = p.teknisi_id
+                                group by t.id, t.nama order by total desc''', args + args_st)
 
         unit = fetch_all(f'''select coalesce(nullif(c.model_indoor, ''), '-') as label, count(*) as total
                              from customer c where {where}

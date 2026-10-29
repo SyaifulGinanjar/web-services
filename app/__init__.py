@@ -114,6 +114,9 @@ def register_template_helpers(app):
         return request.path + ('?' + urlencode(args) if args else '')
 
 
+DB_CONNECTION_ERRORS = {1040, 1044, 1045, 1049, 1129, 2002, 2003, 2005, 2006, 2013}
+
+
 def register_error_handlers(app):
     def wants_json():
         return request.path.startswith('/api/')
@@ -138,6 +141,10 @@ def register_error_handlers(app):
     @app.errorhandler(OperationalError)
     def db_error(error):
         app.logger.exception('Database error')
+        # OperationalError juga dipakai MySQL untuk error query (mis. collation, kolom tidak ada);
+        # hanya kode koneksi yang ditampilkan sebagai "database tidak dapat diakses"
+        if not error.args or error.args[0] not in DB_CONNECTION_ERRORS:
+            return server_error(error)
         if wants_json():
             return jsonify(error='Database tidak dapat diakses'), 503
         return render_template('error/error.html', code=503, title='Database tidak dapat diakses',
