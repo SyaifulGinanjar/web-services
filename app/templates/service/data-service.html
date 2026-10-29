@@ -30,6 +30,7 @@
                         {{ ui.sort_th(params, 'waktu_service', 'Waktu', 'text-nowrap') }}
                         {{ ui.sort_th(params, 'status', 'Status') }}
                         <th>Keterangan</th>
+                        <th class="text-nowrap text-end">Biaya</th>
                         <th class="table-fit text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -50,18 +51,25 @@
                             {{ (data.waktu_service ~ ' hari') if data.waktu_service is not none else '-' }}
                         </td>
                         <td class="text-nowrap">
-                            {% if not data.service_id %}
-                            <span class="badge text-bg-secondary">Belum dijadwalkan</span>
-                            {% elif data.status_pekerjaan == 'completed' %}
-                            <span class="badge text-bg-success">Completed</span>
-                            {% else %}
-                            <span class="badge text-bg-warning">In progress</span>
+                            {{ ui.status_badge(data.status_pekerjaan or 'in progress' if data.service_id else none) }}
+                        </td>
+                        <td>
+                            {{ data.keterangan_service or '-' }}
+                            {% if data.jumlah_lampiran %}
+                            <span class="badge text-bg-light border text-nowrap" title="{{ data.jumlah_lampiran }} lampiran">
+                                {{ ui.icon('paperclip', 12) }} {{ data.jumlah_lampiran }}
+                            </span>
                             {% endif %}
                         </td>
-                        <td>{{ data.keterangan_service or '-' }}</td>
+                        <td class="text-nowrap text-end">
+                            {{ data.biaya|rupiah if data.garansi == 'Out Of Warranty' else '-' }}
+                        </td>
                         <td class="table-fit text-center">
                             {% if data.service_id %}
                             <div class="d-flex gap-1 justify-content-center">
+                                <a href="{{ url_for('service_tambahan.create', customer_id=data.customer_id) }}"
+                                   class="btn btn-outline-primary btn-sm" title="Buat Service Tambahan"
+                                   aria-label="Buat Service Tambahan">{{ ui.icon('repeat') }}</a>
                                 {{ ui.edit_button(url_for('service.edit', id=data.service_id)) }}
                                 {{ ui.delete_button(url_for('service.delete', id=data.service_id), 'Hapus data service untuk "' ~ data.nama ~ '"?') }}
                             </div>
@@ -73,7 +81,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    {{ ui.empty_row(14, params) }}
+                    {{ ui.empty_row(15, params) }}
                     {% endfor %}
                 </tbody>
             </table>

@@ -2,7 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from pymysql.err import IntegrityError
 
 from app.forms import karyawan_form
-from app.models import Teknisi
+from app.models import Lampiran, Teknisi
 from app.pagination import ListParams
 
 bp = Blueprint('karyawan', __name__, url_prefix='/karyawan')
@@ -43,8 +43,9 @@ def edit(id):
             return redirect(url_for('karyawan.index'))
         form = request.form
 
-    return render_template('karyawan/ubah-karyawan.html', data=karyawan, form=form,
-                           errors=errors), 422 if errors else 200
+    return render_template('karyawan/ubah-karyawan.html', data=karyawan, form=form, errors=errors,
+                           lampiran=Lampiran().list('teknisi', id), lampiran_owner=('teknisi', id)), \
+        422 if errors else 200
 
 
 @bp.route('/<int:id>/hapus', methods=['POST'])

@@ -174,3 +174,21 @@ body.sidebar-collapsed .app-content { margin-left: 0; }
     width: 100%;
     max-width: 420px;
 }
+
+.login-logo {
+    max-width: 200px;
+    max-height: 130px;
+    object-fit: contain;
+}
+
+.navbar-logo {
+    height: 34px;
+    width: auto;
+    border-radius: .375rem;
+}
+
+.lampiran-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+}

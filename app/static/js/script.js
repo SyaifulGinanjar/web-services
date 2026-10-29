@@ -305,9 +305,10 @@
         }));
       };
 
-      const { kpi } = data;
-      pie('chartKunjungan', ['Sesuai target', 'Melewati target'], [kpi.kunjungan_ok, kpi.kunjungan_gagal], ['#198754', '#dc3545']);
-      pie('chartSelesai', ['Sesuai target', 'Melewati target'], [kpi.selesai_ok, kpi.selesai_gagal], ['#198754', '#dc3545']);
+      const { kpi, kpi2 } = data;
+      console.log('KPI Data:', kpi, kpi2); // Debugging output
+      pie('chartKunjungan', ['Sesuai target', 'Melewati target'], [kpi.dispatch_ok, kpi.dispatch_gagal], ['#198754', '#dc3545']);
+      pie('chartSelesai', ['Sesuai target', 'Melewati target'], [kpi2.completion_ok, kpi2.completion_gagal], ['#198754', '#dc3545']);
       pie('chartGaransi', data.garansi.map((r) => r.label), data.garansi.map((r) => r.total), ['#0d6efd', '#ffc107', '#adb5bd']);
       bar('chartTeknisi', data.teknisi.map((r) => r.label), [
         { label: 'Total pekerjaan', data: data.teknisi.map((r) => r.total), backgroundColor: '#0d6efd' },

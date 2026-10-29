@@ -1,0 +1,9 @@
+{# Data dari SPK lama (tidak bisa diubah di sini). Butuh: customer #}
+<dl class="row mb-0">
+    <dt class="col-sm-4">No. SPK Lama</dt><dd class="col-sm-8">{{ customer.no_spk }}</dd>
+    <dt class="col-sm-4">Tanggal SPK Lama</dt><dd class="col-sm-8">{{ customer.tgl_spk|tanggal }}</dd>
+    <dt class="col-sm-4">Nama Customer</dt><dd class="col-sm-8">{{ customer.nama }}</dd>
+    <dt class="col-sm-4">Alamat</dt><dd class="col-sm-8">{{ customer.alamat }}</dd>
+    <dt class="col-sm-4">No. Tlpn</dt><dd class="col-sm-8">{{ customer.no_tlpn }}</dd>
+    <dt class="col-sm-4">Garansi</dt><dd class="col-sm-8">{{ customer.garansi or '-' }}</dd>
+</dl>

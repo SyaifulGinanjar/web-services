@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
+
+{% block title %}Service Tambahan{% endblock %}
+{% block title_content %}Service Tambahan{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Service Tambahan', none)]) }}{% endblock %}
+{% block actions %}
+<a href="{{ url_for('service_tambahan.pick_customer') }}" class="btn btn-primary">
+    {{ ui.icon('plus') }} Tambah Service Tambahan
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% call ui.table_toolbar(params, 'Cari no. SPK lama/baru, customer, alamat, teknisi, keterangan...') %}
+        {{ ui.filter_select('status', 'Status', status_options, params.filters.status) }}
+        {{ ui.filter_select('teknisi_id', 'Teknisi', teknisi|options('id', 'nama'), params.filters.teknisi_id) }}
+        {% endcall %}
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="table-fit text-center">No.</th>
+                        {{ ui.sort_th(params, 'no_spk_lama', 'No. SPK Lama', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'no_spk_baru', 'No. SPK Baru', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'nama', 'Nama Customer') }}
+                        <th>Alamat</th>
+                        <th>No. Tlpn</th>
+                        {{ ui.sort_th(params, 'tgl_spk', 'Tgl SPK', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'tanggal_kunjungan', 'Tgl Kunjungan', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'tanggal_selesai', 'Tgl Selesai', 'text-nowrap') }}
+                        <th>Remark Unit</th>
+                        {{ ui.sort_th(params, 'teknisi', 'Teknisi') }}
+                        {{ ui.sort_th(params, 'waktu_service', 'Waktu Service', 'text-nowrap') }}
+                        {{ ui.sort_th(params, 'status', 'Status') }}
+                        <th>Keterangan</th>
+                        {{ ui.sort_th(params, 'biaya', 'Biaya', 'text-nowrap text-end') }}
+                        <th class="table-fit text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page.items %}
+                    <tr>
+                        <td class="text-center">{{ page.first_index + loop.index0 }}</td>
+                        <td class="text-nowrap">{{ data.no_spk_lama }}</td>
+                        <td class="text-nowrap fw-medium">{{ data.no_spk_baru }}</td>
+                        <td>{{ data.nama }}</td>
+                        <td>{{ data.alamat }}</td>
+                        <td class="text-nowrap">{{ data.no_tlpn }}</td>
+                        <td class="text-nowrap">{{ data.tgl_spk|tanggal }}</td>
+                        <td class="text-nowrap">{{ data.tanggal_kunjungan|tanggal }}</td>
+                        <td class="text-nowrap">{{ data.tanggal_selesai|tanggal }}</td>
+                        <td>{{ data.remark_unit or '-' }}</td>
+                        <td>{{ data.teknisi_nama or '-' }}</td>
+                        <td class="text-nowrap text-center">
+                            {{ (data.waktu_service ~ ' hari') if data.waktu_service is not none else '-' }}
+                        </td>
+                        <td class="text-nowrap">{{ ui.status_badge(data.status_pekerjaan) }}</td>
+                        <td>
+                            {{ data.keterangan or '-' }}
+                            {% if data.jumlah_lampiran %}
+                            <span class="badge text-bg-light border text-nowrap" title="{{ data.jumlah_lampiran }} lampiran">
+                                {{ ui.icon('paperclip', 12) }} {{ data.jumlah_lampiran }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap text-end">
+                            {{ data.biaya|rupiah if data.garansi == 'Out Of Warranty' else '-' }}
+                        </td>
+                        <td class="table-fit text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                {{ ui.edit_button(url_for('service_tambahan.edit', id=data.id)) }}
+                                {{ ui.delete_button(url_for('service_tambahan.delete', id=data.id), 'Hapus service tambahan "' ~ data.no_spk_baru ~ '"?') }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {{ ui.empty_row(16, params) }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pagination(page) }}
+    </div>
+</div>
+{% endblock %}

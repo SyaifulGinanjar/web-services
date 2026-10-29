@@ -1,11 +1,13 @@
 import logging
+import os
+from decimal import Decimal
 from urllib.parse import urlencode
 
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session, url_for
 from flask_wtf.csrf import CSRFError
 from pymysql.err import OperationalError
 
-from app import db
+from app import db, migrate
 from app.config import Config
 from app.extensions import csrf
 
@@ -24,6 +26,7 @@ def create_app(config_class=Config):
 
     register_blueprints(app)
     register_template_helpers(app)
+    migrate.register(app)
     register_error_handlers(app)
     register_security_headers(app)
 
@@ -35,9 +38,10 @@ def create_app(config_class=Config):
 
 
 def register_blueprints(app):
-    from app.views import account, auth, customer, dashboard, files, karyawan, service
+    from app.views import (account, auth, customer, dashboard, files, karyawan, lampiran, service,
+                           service_tambahan)
 
-    for module in (auth, dashboard, customer, service, karyawan, account, files):
+    for module in (auth, dashboard, customer, service, service_tambahan, karyawan, lampiran, account, files):
         app.register_blueprint(module.bp)
 
 
@@ -46,6 +50,7 @@ NAV_MENU = (
     ('Data', (
         ('customer.index', 'Data Customer', 'customer'),
         ('service.index', 'Data Service', 'service'),
+        ('service_tambahan.index', 'Service Tambahan', 'service_tambahan'),
         ('karyawan.index', 'Data Karyawan', 'karyawan'),
     )),
     ('Setting', (('account.setting', 'User Setting', 'account'),)),
@@ -53,9 +58,15 @@ NAV_MENU = (
 
 
 def register_template_helpers(app):
+    logo = app.config['APP_LOGO']
+    has_logo = bool(logo) and os.path.isfile(os.path.join(app.static_folder, logo))
+    if logo and not has_logo:
+        app.logger.warning('APP_LOGO "%s" tidak ditemukan di folder static; logo tidak ditampilkan.', logo)
+
     @app.context_processor
     def inject_globals():
         return {
+            'app_logo': url_for('static', filename=logo) if has_logo else None,
             'app_name': app.config['APP_NAME'],
             'current_user': session.get('username'),
             'nav_menu': NAV_MENU,
@@ -66,6 +77,25 @@ def register_template_helpers(app):
     @app.template_filter('tanggal')
     def format_tanggal(value, fmt='%d-%m-%Y'):
         return value.strftime(fmt) if value else '-'
+
+    @app.template_filter('rupiah')
+    def format_rupiah(value):
+        """1250000 -> 'Rp 1.250.000' (desimal ditampilkan jika ada sen)."""
+        if value is None or value == '':
+            return '-'
+        amount = Decimal(value)
+        text = f'{amount:,.2f}' if amount != amount.to_integral_value() else f'{amount:,.0f}'
+        return 'Rp ' + text.replace(',', '_').replace('.', ',').replace('_', '.')
+
+    @app.template_filter('ukuran_file')
+    def format_ukuran(size):
+        if size is None:
+            return '-'
+        if size < 1024:
+            return f'{size} B'
+        if size < 1024 * 1024:
+            return f'{size / 1024:.0f} KB'
+        return f'{size / 1024 / 1024:.1f} MB'
 
     @app.template_filter('options')
     def to_options(rows, value_key, label_key):

@@ -2,7 +2,10 @@
     <div class="d-flex align-items-center gap-3">
         <button class="btn btn-outline-light btn-sm" id="sidebar-button" type="button"
                 aria-controls="sidebar" aria-label="Toggle menu">☰</button>
-        <a class="navbar-brand mb-0 h1 fs-5" href="{{ url_for('dashboard.index') }}">{{ app_name }}</a>
+        <a class="navbar-brand mb-0 h1 fs-5 d-flex align-items-center gap-2" href="{{ url_for('dashboard.index') }}">
+            {% if app_logo %}<img src="{{ app_logo }}" alt="" class="navbar-logo">{% endif %}
+            <span>{{ app_name }}</span>
+        </a>
     </div>
     <div class="d-flex align-items-center gap-3">
         <span class="text-white-50 small d-none d-sm-inline">{{ current_user }}</span>
