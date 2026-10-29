@@ -23,6 +23,7 @@
                         <th class="table-fit text-center">No.</th>
                         {{ ui.sort_th(params, 'nama', 'Nama') }}
                         {{ ui.sort_th(params, 'no_tlpn', 'No. Telepon') }}
+                        <th class="table-fit text-center">Lampiran</th>
                         <th class="table-fit text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -32,6 +33,13 @@
                         <td class="text-center">{{ page.first_index + loop.index0 }}</td>
                         <td>{{ data.nama }}</td>
                         <td>{{ data.no_tlpn or 'Belum ada' }}</td>
+                        <td class="text-center">
+                            {% if data.jumlah_lampiran %}
+                            <a href="{{ url_for('karyawan.edit', id=data.id) }}" class="badge text-bg-light border text-decoration-none">
+                                {{ ui.icon('paperclip', 12) }} {{ data.jumlah_lampiran }}
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
                         <td class="table-fit text-center">
                             <div class="d-flex gap-1 justify-content-center">
                                 {{ ui.edit_button(url_for('karyawan.edit', id=data.id)) }}
@@ -40,7 +48,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    {{ ui.empty_row(4, params) }}
+                    {{ ui.empty_row(5, params) }}
                     {% endfor %}
                 </tbody>
             </table>

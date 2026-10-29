@@ -8,6 +8,9 @@
 <main class="login-wrapper">
     <form class="card shadow-sm login-card" method="POST" novalidate>
         <div class="card-body p-4">
+            {% if app_logo %}
+            <img src="{{ app_logo }}" alt="Logo {{ app_name }}" class="login-logo d-block mx-auto mb-3">
+            {% endif %}
             <h1 class="h4 text-center mb-1">{{ app_name }}</h1>
             <p class="text-center text-body-secondary mb-4">Masuk untuk melanjutkan</p>
             {{ ui.flash_messages() }}

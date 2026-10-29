@@ -12,6 +12,7 @@
             <dt class="col-sm-4">No. SPK</dt><dd class="col-sm-8">{{ data.no_spk }}</dd>
             <dt class="col-sm-4">Customer</dt><dd class="col-sm-8">{{ data.nama }}</dd>
             <dt class="col-sm-4">Tanggal SPK</dt><dd class="col-sm-8">{{ data.tgl_spk|tanggal }}</dd>
+            <dt class="col-sm-4">Garansi</dt><dd class="col-sm-8">{{ data.garansi or '-' }}</dd>
         </dl>
         <hr>
         {% include 'service/_form.html' %}
@@ -26,4 +27,5 @@
         </div>
     </form>
 </div>
+{{ ui.lampiran_panel(lampiran_owner, lampiran) }}
 {% endblock %}

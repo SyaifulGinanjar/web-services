@@ -1,7 +1,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from app.forms import service_form
-from app.models import Customers, Services, Teknisi
+from app.models import Customers, Lampiran, Services, Teknisi
 from app.pagination import ListParams
 
 bp = Blueprint('service', __name__, url_prefix='/service')
@@ -23,7 +23,7 @@ def create(customer_id):
     form, errors = {}, {}
 
     if request.method == 'POST':
-        data, errors = service_form(request.form, tgl_spk=customer['tgl_spk'])
+        data, errors = service_form(request.form, tgl_spk=customer['tgl_spk'], garansi=customer['garansi'])
         if not errors:
             Services().create(customer_id, data)
             flash(f'Jadwal service untuk "{customer["nama"]}" berhasil dibuat.', 'success')
@@ -31,7 +31,7 @@ def create(customer_id):
         form = request.form
 
     return render_template('service/tambah-service.html', customer=customer, form=form, errors=errors,
-                           teknisi=Teknisi().all()), 422 if errors else 200
+                           teknisi=Teknisi().all(), garansi=customer['garansi']), 422 if errors else 200
 
 
 @bp.route('/<int:id>/ubah', methods=['GET', 'POST'])
@@ -41,7 +41,8 @@ def edit(id):
     form, errors = service, {}
 
     if request.method == 'POST':
-        data, errors = service_form(request.form, tgl_spk=service['tgl_spk'], with_status=True)
+        data, errors = service_form(request.form, tgl_spk=service['tgl_spk'], with_status=True,
+                                    garansi=service['garansi'])
         if not errors:
             services.update(id, data)
             flash('Data service berhasil diubah.', 'success')
@@ -49,7 +50,9 @@ def edit(id):
         form = request.form
 
     return render_template('service/ubah-service.html', data=service, form=form, errors=errors,
-                           teknisi=Teknisi().all(), status_options=STATUS_FILTER[1:]), 422 if errors else 200
+                           teknisi=Teknisi().all(), status_options=STATUS_FILTER[1:], garansi=service['garansi'],
+                           lampiran=Lampiran().list('service', id), lampiran_owner=('service', id)), \
+        422 if errors else 200
 
 
 @bp.route('/<int:id>/hapus', methods=['POST'])

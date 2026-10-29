@@ -2,7 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from pymysql.err import IntegrityError
 
 from app.forms import customer_form
-from app.models import Customers
+from app.models import Customers, ServiceTambahan
 from app.pagination import ListParams
 
 bp = Blueprint('customer', __name__, url_prefix='/customer')
@@ -46,7 +46,8 @@ def edit(id):
         form = request.form
 
     return render_template('customer/ubah-customer.html', data=customer, form=form, errors=errors,
-                           garansi_options=GARANSI_OPTIONS), 422 if errors else 200
+                           garansi_options=GARANSI_OPTIONS,
+                           service_tambahan=ServiceTambahan().by_customer(id)), 422 if errors else 200
 
 
 @bp.route('/<int:id>/hapus', methods=['POST'])
@@ -57,5 +58,5 @@ def delete(id):
         customers.delete(id)
         flash('Customer berhasil dihapus.', 'success')
     except IntegrityError:
-        flash('Customer tidak bisa dihapus karena masih memiliki data service.', 'danger')
+        flash('Customer tidak bisa dihapus karena masih memiliki data service / service tambahan.', 'danger')
     return redirect(request.referrer or url_for('customer.index'))

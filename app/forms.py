@@ -1,10 +1,13 @@
 """Validasi input form sederhana. Setiap fungsi return (data, errors)."""
 import re
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
-from app.models import Customers, Services
+from app.models import Customers, Services, ServiceTambahan
 
 PHONE_RE = re.compile(r'^[0-9+()\-\s]{6,20}$')
+MAX_MONEY = Decimal('10000000000000')  # batas DECIMAL(15,2)
+OUT_OF_WARRANTY = 'Out Of Warranty'
 
 
 class Form:
@@ -58,6 +61,27 @@ class Form:
         self.data[name] = value
         return value
 
+    def money(self, name, label, required=True):
+        """Nominal Rupiah: menerima '1250000', '1.250.000', 'Rp 1.250.000,50'."""
+        raw = (self.source.get(name) or '').strip()
+        value = None
+        if raw:
+            cleaned = raw.lower().replace('rp', '').replace(' ', '').replace('.', '').replace(',', '.')
+            try:
+                value = Decimal(cleaned)
+            except InvalidOperation:
+                self.errors[name] = f'{label} harus berupa angka.'
+            else:
+                if not value.is_finite() or value < 0:
+                    self.errors[name] = f'{label} tidak boleh negatif.'
+                elif value >= MAX_MONEY:
+                    self.errors[name] = f'{label} terlalu besar.'
+                value = value.quantize(Decimal('0.01')) if name not in self.errors else None
+        elif required:
+            self.errors[name] = f'{label} wajib diisi.'
+        self.data[name] = value
+        return value
+
     def result(self):
         return self.data, self.errors
 
@@ -78,20 +102,59 @@ def customer_form(source):
     return f.result()
 
 
-def service_form(source, tgl_spk=None, with_status=False):
+def _biaya(f, garansi, status):
+    """Biaya hanya untuk Out of Warranty; wajib saat pekerjaan selesai."""
+    if garansi == OUT_OF_WARRANTY:
+        f.money('biaya', 'Biaya', required=status == 'completed')
+    else:
+        f.data['biaya'] = None
+
+
+def service_form(source, tgl_spk=None, with_status=False, garansi=None):
     f = Form(source)
     f.integer('teknisi_id', 'Teknisi')
     kunjungan = f.date('tanggal_kunjungan', 'Tanggal kunjungan')
     selesai = f.date('tanggal_selesai', 'Tanggal selesai')
     f.text('remark_unit', 'Remark unit', required=False)
+    status = None
     if with_status:
-        f.choice('status_pekerjaan', 'Status pekerjaan', Services.STATUS)
+        status = f.choice('status_pekerjaan', 'Status pekerjaan', Services.STATUS)
         f.text('keterangan_service', 'Keterangan service', required=False)
+    _biaya(f, garansi, status)
 
     if kunjungan and selesai and selesai < kunjungan:
         f.errors['tanggal_selesai'] = 'Tanggal selesai tidak boleh sebelum tanggal kunjungan.'
     if kunjungan and tgl_spk and kunjungan < tgl_spk:
         f.errors['tanggal_kunjungan'] = 'Tanggal kunjungan tidak boleh sebelum tanggal SPK.'
+    return f.result()
+
+
+def service_tambahan_form(source, tgl_spk_lama=None, garansi=None):
+    f = Form(source)
+    f.text('no_spk_baru', 'No. SPK Baru', max_length=50)
+    tgl_spk = f.date('tgl_spk', 'Tanggal SPK')
+    status = f.choice('status_pekerjaan', 'Status', ServiceTambahan.STATUS)
+    dijadwalkan = status in ('in progress', 'completed')
+
+    f.integer('teknisi_id', 'Teknisi', required=dijadwalkan)
+    kunjungan = f.date('tanggal_kunjungan', 'Tanggal kunjungan', required=dijadwalkan)
+    selesai = f.date('tanggal_selesai', 'Tanggal selesai', required=status == 'completed')
+    f.text('remark_unit', 'Remark unit', required=False)
+    f.text('keterangan', 'Keterangan', required=False, max_length=1000)
+    _biaya(f, garansi, status)
+
+    if tgl_spk and tgl_spk_lama and tgl_spk < tgl_spk_lama:
+        f.errors['tgl_spk'] = 'Tanggal SPK baru tidak boleh sebelum tanggal SPK lama.'
+    if kunjungan and tgl_spk and kunjungan < tgl_spk:
+        f.errors['tanggal_kunjungan'] = 'Tanggal kunjungan tidak boleh sebelum tanggal SPK.'
+    if selesai and kunjungan and selesai < kunjungan:
+        f.errors['tanggal_selesai'] = 'Tanggal selesai tidak boleh sebelum tanggal kunjungan.'
+    if selesai and not kunjungan and 'tanggal_kunjungan' not in f.errors:
+        f.errors['tanggal_kunjungan'] = 'Isi tanggal kunjungan terlebih dahulu.'
+
+    # 'belum' disimpan sebagai NULL di database
+    if status == 'belum':
+        f.data['status_pekerjaan'] = None
     return f.result()
 
 

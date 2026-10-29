@@ -48,11 +48,16 @@ class Config:
     APP_NAME = os.getenv('APP_NAME', 'Data Service')
     PER_PAGE_DEFAULT = env_int('PER_PAGE_DEFAULT', 10)
     PER_PAGE_OPTIONS = (10, 25, 50, 100)
+    APP_LOGO = os.getenv('APP_LOGO', 'img/logo.jpg')  # relatif terhadap app/static
 
     # Upload
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER') or str(BASE_DIR / 'uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
     MAX_CONTENT_LENGTH = env_int('MAX_UPLOAD_MB', 5) * 1024 * 1024
+
+    # Lampiran: 'local' (folder UPLOAD_FOLDER) atau 'blob' (Vercel Blob, wajib di Vercel)
+    STORAGE_BACKEND = os.getenv('STORAGE_BACKEND', 'local').strip().lower()
+    BLOB_READ_WRITE_TOKEN = os.getenv('BLOB_READ_WRITE_TOKEN', '')
 
     @classmethod
     def validate(cls):
@@ -64,6 +69,10 @@ class Config:
                 raise RuntimeError('SECRET_KEY wajib di-set di environment untuk production.')
         if not cls.DB_NAME:
             raise RuntimeError('DB_NAME belum di-set. Lihat .env.example.')
+        if cls.STORAGE_BACKEND not in ('local', 'blob'):
+            raise RuntimeError('STORAGE_BACKEND harus "local" atau "blob".')
+        if cls.STORAGE_BACKEND == 'blob' and not cls.BLOB_READ_WRITE_TOKEN:
+            raise RuntimeError('BLOB_READ_WRITE_TOKEN wajib di-set jika STORAGE_BACKEND=blob.')
 
 
 class TestConfig(Config):
@@ -71,3 +80,4 @@ class TestConfig(Config):
     SECRET_KEY = 'test'
     WTF_CSRF_ENABLED = False
     DB_NAME = 'test'
+    STORAGE_BACKEND = 'local'

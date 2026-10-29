@@ -12,6 +12,7 @@
             <dt class="col-sm-4">No. SPK</dt><dd class="col-sm-8">{{ customer.no_spk }}</dd>
             <dt class="col-sm-4">Customer</dt><dd class="col-sm-8">{{ customer.nama }}</dd>
             <dt class="col-sm-4">Tanggal SPK</dt><dd class="col-sm-8">{{ customer.tgl_spk|tanggal }}</dd>
+            <dt class="col-sm-4">Garansi</dt><dd class="col-sm-8">{{ customer.garansi or '-' }}</dd>
         </dl>
         <hr>
         {% include 'service/_form.html' %}

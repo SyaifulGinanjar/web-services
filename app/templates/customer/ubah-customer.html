@@ -15,4 +15,29 @@
         </div>
     </form>
 </div>
+
+<div class="card form-card mt-3">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center gap-2">
+        <span>Service Tambahan <span class="badge text-bg-light border">{{ service_tambahan|length }}</span></span>
+        <a href="{{ url_for('service_tambahan.create', customer_id=data.id) }}" class="btn btn-sm btn-outline-primary">
+            {{ ui.icon('plus') }} Tambah
+        </a>
+    </div>
+    {% if service_tambahan %}
+    <div class="list-group list-group-flush">
+        {% for st in service_tambahan %}
+        <a href="{{ url_for('service_tambahan.edit', id=st.id) }}"
+           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2">
+            <span>
+                <span class="fw-medium">{{ st.no_spk_baru }}</span>
+                <span class="small text-body-secondary">· SPK {{ st.tgl_spk|tanggal }} · {{ st.teknisi_nama or 'Belum ada teknisi' }}</span>
+            </span>
+            {{ ui.status_badge(st.status_pekerjaan) }}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-body text-body-secondary small">Belum ada service tambahan.</div>
+    {% endif %}
+</div>
 {% endblock %}

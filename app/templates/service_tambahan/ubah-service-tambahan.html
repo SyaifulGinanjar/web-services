@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% import "components/macros.html" as ui with context %}
+
+{% block title %}Ubah Service Tambahan{% endblock %}
+{% block title_content %}Ubah Service Tambahan{% endblock %}
+{% block breadcrumb %}{{ ui.breadcrumb([('Service Tambahan', url_for('service_tambahan.index')), ('Ubah', none)]) }}{% endblock %}
+
+{% block content %}
+<div class="card form-card">
+    <form class="card-body" action="{{ url_for('service_tambahan.edit', id=data.id) }}" method="POST" novalidate>
+        {% include 'service_tambahan/_customer_info.html' %}
+        <hr>
+        {% include 'service_tambahan/_form.html' %}
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('service_tambahan.index') }}" class="btn btn-outline-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+    </form>
+</div>
+{{ ui.lampiran_panel(lampiran_owner, lampiran) }}
+{% endblock %}

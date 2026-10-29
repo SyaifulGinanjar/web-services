@@ -25,11 +25,13 @@
 
 {% block content %}
 {% set t = summary.totals %}
+{% set st = summary.tambahan %}
 <p class="text-body-secondary mb-3">
     Periode: <strong>{{ bulan_list[bulan - 1] if bulan else 'Semua bulan' }} {{ tahun or 'semua tahun' }}</strong>
     · berdasarkan tanggal SPK
 </p>
 
+<h2 class="h6 text-body-secondary text-uppercase mb-2">Service</h2>
 <div class="row g-3 mb-3">
     {% for label, value, color, url in [
         ('Total Customer', t.total_customer, 'primary', url_for('customer.index')),
@@ -49,16 +51,50 @@
     {% endfor %}
 </div>
 
+<h2 class="h6 text-body-secondary text-uppercase mb-2">Service Tambahan</h2>
+<div class="row g-3 mb-3">
+    {% for label, value, color, url in [
+        ('Total Customer', st.total_customer, 'primary', url_for('service_tambahan.index')),
+        ('Total Pekerjaan', st.total_pekerjaan, 'info', url_for('service_tambahan.index')),
+        ('Selesai', st.selesai, 'success', url_for('service_tambahan.index', status='completed')),
+        ('Dalam Proses', st.proses, 'warning', url_for('service_tambahan.index', status='in progress')),
+        ('Belum Dijadwalkan', st.belum_dijadwalkan, 'secondary', url_for('service_tambahan.index', status='belum')),
+    ] %}
+    <div class="col-6 col-md-4 col-xl">
+        <a class="card stat-card border-start border-4 border-{{ color }} h-100 text-decoration-none" href="{{ url }}">
+            <div class="card-body">
+                <div class="text-body-secondary small">{{ label }}</div>
+                <div class="fs-2 fw-semibold text-body">{{ value }}</div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card mb-3">
+    <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <div class="text-body-secondary small">Total Biaya Out of Warranty</div>
+            <div class="fs-3 fw-semibold">{{ summary.biaya_oow.total|rupiah }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-4 small">
+            <div><div class="text-body-secondary">Service</div><div class="fw-medium">{{ summary.biaya_oow.service|rupiah }}</div></div>
+            <div><div class="text-body-secondary">Service Tambahan</div><div class="fw-medium">{{ summary.biaya_oow.tambahan|rupiah }}</div></div>
+            <div><div class="text-body-secondary">Pekerjaan berbiaya</div><div class="fw-medium">{{ summary.biaya_oow.jumlah }}</div></div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3 mb-3">
     <div class="col-md-6 col-xl-4">
         <div class="card h-100">
-            <div class="card-header fw-semibold">Kunjungan ≤ {{ summary.batas.kunjungan }} hari</div>
+            <div class="card-header fw-semibold">Dispatch</div>
             <div class="card-body chart-box"><canvas id="chartKunjungan" aria-label="Grafik KPI kunjungan"></canvas></div>
         </div>
     </div>
     <div class="col-md-6 col-xl-4">
         <div class="card h-100">
-            <div class="card-header fw-semibold">Selesai ≤ {{ summary.batas.selesai }} hari</div>
+            <div class="card-header fw-semibold">Completion</div>
             <div class="card-body chart-box"><canvas id="chartSelesai" aria-label="Grafik KPI penyelesaian"></canvas></div>
         </div>
     </div>
@@ -81,6 +117,50 @@
         <div class="card h-100">
             <div class="card-header fw-semibold">Seri Unit Terbanyak (Model Indoor)</div>
             <div class="card-body chart-box"><canvas id="chartUnit" aria-label="Grafik seri unit"></canvas></div>
+        </div>
+    </div>
+</div>
+
+{% set bt = summary.biaya_teknisi %}
+<div class="card mt-3">
+    <div class="card-header fw-semibold">Pendapatan Out of Warranty per Karyawan</div>
+    <div class="card-body">
+        <p class="text-body-secondary small">Gabungan Service dan Service Tambahan dengan garansi Out of Warranty dan status Completed.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="table-fit text-center">No.</th>
+                        <th>Nama Karyawan</th>
+                        <th class="text-end">Service</th>
+                        <th class="text-end">Service Tambahan</th>
+                        <th class="text-end">Total Biaya</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in bt %}
+                    <tr>
+                        <td class="text-center">{{ loop.index }}</td>
+                        <td>{{ row.nama }} <span class="small text-body-secondary">({{ row.jumlah }} pekerjaan)</span></td>
+                        <td class="text-end text-nowrap">{{ row.service|rupiah }}</td>
+                        <td class="text-end text-nowrap">{{ row.tambahan|rupiah }}</td>
+                        <td class="text-end text-nowrap fw-semibold">{{ row.total|rupiah }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-body-secondary py-4">Belum ada data untuk periode ini.</td></tr>
+                    {% endfor %}
+                </tbody>
+                {% if bt %}
+                <tfoot>
+                    <tr class="fw-semibold">
+                        <td colspan="2" class="text-end">Total</td>
+                        <td class="text-end text-nowrap">{{ bt|sum(attribute='service')|rupiah }}</td>
+                        <td class="text-end text-nowrap">{{ bt|sum(attribute='tambahan')|rupiah }}</td>
+                        <td class="text-end text-nowrap">{{ bt|sum(attribute='total')|rupiah }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
         </div>
     </div>
 </div>
